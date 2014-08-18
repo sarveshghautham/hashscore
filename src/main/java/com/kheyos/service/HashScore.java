@@ -1,4 +1,4 @@
-package hashscore;
+package com.kheyos.service;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -7,6 +7,9 @@ import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
 import com.twitter.hbc.ClientBuilder;
 import com.twitter.hbc.core.Client;
@@ -31,9 +34,22 @@ public class HashScore implements Runnable {
 	private Authentication hosebirdAuth ;
 	public StatusesFilterEndpoint hosebirdEndpoint ;
 	private Client hosebirdClient;
+	private String trackingKeywords;
+	private Thread t_ReadMessage;
+	private String keyFile;
+	
+	
+	public HashScore () {
+		
+	}
+	
+	public HashScore (String keyFile, String keyword) {
+		this.keyFile = keyFile;
+		this.trackingKeywords = keyword;		
+	}
 	
 	public void readKeyFromFile () throws IOException {
-		BufferedReader reader = new BufferedReader(new FileReader("src/main/resources/secret.txt"));
+		BufferedReader reader = new BufferedReader(new FileReader(keyFile));
 		
 		consumerKey = reader.readLine();
 		consumerSecret = reader.readLine();
@@ -53,7 +69,7 @@ public class HashScore implements Runnable {
 		hosebirdEndpoint = new StatusesFilterEndpoint();
 		// Optional: set up some followings and track terms
 		List<Long> followings = Lists.newArrayList(1234L, 566788L);
-		List<String> terms = Lists.newArrayList("indvseng");
+		List<String> terms = Lists.newArrayList(trackingKeywords);
 		hosebirdEndpoint.followings(followings);
 		hosebirdEndpoint.trackTerms(terms);
 		
@@ -76,23 +92,29 @@ public class HashScore implements Runnable {
 		hosebirdClient = builder.build();
 		// Attempts to establish a connection.
 		hosebirdClient.connect();
-
 	}
 	
 	
-	public static void main (String []args) throws IOException {
+	public void start () throws IOException {
 				
-		HashScore hs = new HashScore();
-		hs.readKeyFromFile();
-		hs.setup();
-		hs.authenticate();
-		hs.connect();
-		Thread readMessage = new Thread(hs);
-		readMessage.start();
+		t_ReadMessage = new Thread(this);
+		t_ReadMessage.start();
 	}
 
 	public void run() {
+		
 		// TODO Auto-generated method stub
+		
+		try {
+			readKeyFromFile();
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		setup();
+		authenticate();
+		connect();
+		
 		while (!hosebirdClient.isDone()) {
 			String msg = "";
 			try {
@@ -101,8 +123,35 @@ public class HashScore implements Runnable {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			System.out.println(msg);		  
+			
+			try {
+				JSONData(msg);
+			} catch (JsonProcessingException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			//System.out.println(msg);		
+			
 		}
+	}
+	
+	public void JSONData (String msg) throws JsonProcessingException, IOException {
+		//read json file data to String
+		byte[] jsonData = msg.getBytes();
+		 
+		//create ObjectMapper instance
+		ObjectMapper objectMapper = new ObjectMapper();
+		 
+		//read JSON like DOM Parser
+		JsonNode rootNode = objectMapper.readTree(jsonData);
+		JsonNode date = rootNode.path("created_at");
+		System.out.println("created data = "+date.asText());
+		 
+		JsonNode tweet = rootNode.path("text");
+		System.out.println("text = "+tweet.asText());	
 	}
 	
 	public void terminate () {
