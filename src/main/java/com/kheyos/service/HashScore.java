@@ -3,7 +3,14 @@ package com.kheyos.service;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -35,17 +42,33 @@ public class HashScore implements Runnable {
 	public StatusesFilterEndpoint hosebirdEndpoint ;
 	private Client hosebirdClient;
 	private String trackingKeywords;
+	private String matchTag;
 	private Thread t_ReadMessage;
 	private String keyFile;
-	
+	private int trackingFor;
+	public HashMap<Integer,Integer> track;
+	Timer timer;
 	
 	public HashScore () {
 		
 	}
 	
-	public HashScore (String keyFile, String keyword) {
+	public HashScore (String keyFile, String keyword, String matchTag) {
 		this.keyFile = keyFile;
-		this.trackingKeywords = keyword;		
+		this.trackingKeywords = keyword;	
+		this.matchTag = matchTag;
+		track = new HashMap<Integer, Integer>();
+		
+		if (keyword.contains("six") || keyword.contains("SIX") || keyword.contains("6")) {
+			trackingFor = 6;			
+		}
+		else if (keyword.equals("four") || keyword.equals("FOUR") || keyword.contains("4")) {
+			trackingFor = 4;			
+		}
+		else if (keyword.contains("wicket")) {
+			trackingFor = -1;
+		}	
+		track.put(trackingFor, 0);		
 	}
 	
 	public void readKeyFromFile () throws IOException {
@@ -104,7 +127,9 @@ public class HashScore implements Runnable {
 	public void run() {
 		
 		// TODO Auto-generated method stub
-		
+		timer = new Timer();
+	    timer.schedule(new AnalysisTimer(this, matchTag), 60000, 60000);
+	    
 		try {
 			readKeyFromFile();
 		} catch (IOException e1) {
@@ -147,15 +172,33 @@ public class HashScore implements Runnable {
 		 
 		//read JSON like DOM Parser
 		JsonNode rootNode = objectMapper.readTree(jsonData);
-		JsonNode date = rootNode.path("created_at");
-		System.out.println("created data = "+date.asText());
-		 
-		JsonNode tweet = rootNode.path("text");
-		System.out.println("text = "+tweet.asText());	
+		JsonNode dateNode = rootNode.path("created_at");
+		JsonNode tweetNode = rootNode.path("text");
+		
+		String date = dateNode.asText();
+		String tweet = tweetNode.asText(); 
+		int count=0;
+		
+		//System.out.println("date = "+date);
+		//System.out.println("text = "+tweet);
+		
+		if (tweet.contains(trackingKeywords) && track.containsKey(trackingFor)
+				) {
+			
+			count = track.get(trackingFor);			
+			count++;
+			
+			synchronized (track) {
+				track.replace(Integer.parseInt(trackingKeywords), count);	
+			}
+			
+			System.out.println("date = "+date);
+			System.out.println("text = "+tweet);	
+			
+		}
 	}
 	
 	public void terminate () {
 		hosebirdClient.stop();
 	}
-	
 }

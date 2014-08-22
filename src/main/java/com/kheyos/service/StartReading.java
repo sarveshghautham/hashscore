@@ -17,8 +17,9 @@ public class StartReading {
 		String line="";
 		
 		BufferedReader br = new BufferedReader(new FileReader(keywordFile));
+		String match_tag = br.readLine();
 		while ((line = br.readLine()) != null) {
-			hs = new HashScore (keyFile, line);
+			hs = new HashScore (keyFile, line, match_tag);
 			hs.start();
 		}
 		
