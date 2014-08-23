@@ -6,7 +6,6 @@ import java.util.TimerTask;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 
-
 public class ReadScores extends TimerTask {
 
 	private String scoreId;
