@@ -3,14 +3,8 @@ package com.kheyos.service;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -47,28 +41,29 @@ public class HashScore implements Runnable {
 	private String keyFile;
 	private int trackingFor;
 	public HashMap<Integer,Integer> track;
-	Timer timer;
+	
 	
 	public HashScore () {
 		
 	}
 	
-	public HashScore (String keyFile, String keyword, String matchTag) {
+	public HashScore (String keyFile, String keyword, String match_tag) {
 		this.keyFile = keyFile;
-		this.trackingKeywords = keyword;	
-		this.matchTag = matchTag;
+		this.matchTag = match_tag;
 		track = new HashMap<Integer, Integer>();
 		
-		if (keyword.contains("six") || keyword.contains("SIX") || keyword.contains("6")) {
+		if (keyword.equals("six") || keyword.equals("SIX") || keyword.equals("6")) {
 			trackingFor = 6;			
 		}
-		else if (keyword.equals("four") || keyword.equals("FOUR") || keyword.contains("4")) {
+		else if (keyword.equals("four") || keyword.equals("FOUR") || keyword.equals("4")) {
 			trackingFor = 4;			
 		}
-		else if (keyword.contains("wicket")) {
+		else if (keyword.equals("wicket")) {
 			trackingFor = -1;
 		}	
-		track.put(trackingFor, 0);		
+		track.put(trackingFor, 0);
+		trackingKeywords = matchTag + " " + keyword;
+		
 	}
 	
 	public void readKeyFromFile () throws IOException {
@@ -123,45 +118,6 @@ public class HashScore implements Runnable {
 		t_ReadMessage = new Thread(this);
 		t_ReadMessage.start();
 	}
-
-	public void run() {
-		
-		// TODO Auto-generated method stub
-		timer = new Timer();
-	    timer.schedule(new AnalysisTimer(this, matchTag), 60000, 60000);
-	    
-		try {
-			readKeyFromFile();
-		} catch (IOException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
-		setup();
-		authenticate();
-		connect();
-		
-		while (!hosebirdClient.isDone()) {
-			String msg = "";
-			try {
-				msg = msgQueue.take();
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			
-			try {
-				JSONData(msg);
-			} catch (JsonProcessingException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			//System.out.println(msg);		
-			
-		}
-	}
 	
 	public void JSONData (String msg) throws JsonProcessingException, IOException {
 		//read json file data to String
@@ -200,5 +156,41 @@ public class HashScore implements Runnable {
 	
 	public void terminate () {
 		hosebirdClient.stop();
+	}
+
+	public void run() {
+		
+		// TODO Auto-generated method stub
+		
+	    try {
+			readKeyFromFile();
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		setup();
+		authenticate();
+		connect();
+		
+		while (!hosebirdClient.isDone()) {
+			String msg = "";
+			try {
+				msg = msgQueue.take();
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+			try {
+				JSONData(msg);
+			} catch (JsonProcessingException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			//System.out.println(msg);					
+		}
 	}
 }

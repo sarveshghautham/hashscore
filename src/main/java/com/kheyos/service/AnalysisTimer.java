@@ -4,9 +4,8 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.HashMap;
-import java.util.TimerTask;
 
-public class AnalysisTimer extends TimerTask {
+public class AnalysisTimer {
 	private HashMap<Integer, Integer> track;
 	private String matchTag;
 	private Cassandra cOp;
@@ -18,7 +17,7 @@ public class AnalysisTimer extends TimerTask {
 		cOp.connect("127.0.0.1");
 	}
 	
-	public void run () {
+	public void analyseFeeds () {
 		
 		DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 		Calendar startCal  = Calendar.getInstance();
@@ -34,23 +33,27 @@ public class AnalysisTimer extends TimerTask {
 			System.out.println("Track not empty: "+track);
 			//Write to cassandra
 			
-			String query = "INSERT INTO ks_hashscore.hashscore "
-					+ "(start_time, "
-					+ "end_time, "
-					+ "match_tag, "
-					+ "fours_count, "
-					+ "sixers_count, "
-					+ "wickets_count) "
-					+ "VALUES ("
-					+ "'" + startTime + "' , '"
-					+ endTime + "' , '"
-					+ matchTag + "' ,"
-					+ track.get(4) + ","
-					+ track.get(6) + ","
-					+ track.get(-1)
-					+")";
-			System.out.println(query);
-			cOp.insertData(query);
+			synchronized (cOp) {
+			
+				String query = "INSERT INTO ks_hashscore.hashscore "
+						+ "(start_time, "
+						+ "end_time, "
+						+ "match_tag, "
+						+ "fours_count, "
+						+ "sixers_count, "
+						+ "wickets_count) "
+						+ "VALUES ("
+						+ "'" + startTime + "' , '"
+						+ endTime + "' , '"
+						+ matchTag + "' ,"
+						+ track.get(4) + ","
+						+ track.get(6) + ","
+						+ track.get(-1)
+						+")";
+				//System.out.println(query);
+				
+				cOp.insertData(query);
+			}
 			
 		}
 		else {
