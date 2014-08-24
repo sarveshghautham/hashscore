@@ -30,9 +30,9 @@ public class Cassandra {
 		session.execute(query);      
 	}
 	
-	public void selectQuery () {
+	public int selectQuery (String matchTag) {
 		Session session = cluster.connect();
-		String query = "SELECT * FROM ks_hashscore.hashscore";
+		String query = "SELECT * FROM ks_hashscore.hashscore where match_tag='"+matchTag+"' ORDER BY end_time DESC LIMIT 1";
 		ResultSet result = session.execute(query);
 		ArrayList<Integer> temp = new ArrayList<Integer>();
 		
@@ -40,22 +40,18 @@ public class Cassandra {
 			temp.add(row.getInt("fours_count"));
 			temp.add(row.getInt("sixers_count"));
 			temp.add(row.getInt("wickets_count"));
-			System.out.println(Collections.max(temp));
+
 		}
+		return Collections.max(temp);
 	}
 	
 	public void close () {
 		cluster.close();
 	}
 	
-	public static void main(String[] args) {
-	   Cassandra client = new Cassandra();
-	   client.connect("127.0.0.1");
-	   //client.insertData();
-	   client.selectQuery();
-	   client.close();
-	   
+	public static void main (String []args) {
+		Cassandra c = new Cassandra();
+		c.connect("127.0.0.1");
+		System.out.println(c.selectQuery("#indvseng"));
 	}
-	
-	
 }
