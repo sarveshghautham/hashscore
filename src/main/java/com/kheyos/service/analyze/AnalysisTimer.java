@@ -1,4 +1,4 @@
-package com.kheyos.service;
+package com.kheyos.service.analyze;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;

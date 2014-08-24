@@ -1,7 +1,6 @@
-package com.kheyos.service;
+package com.kheyos.service.analyze;
 
 import java.util.ArrayList;
-import java.util.Collections;
 
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Host;

@@ -1,4 +1,4 @@
-package com.kheyos.service;
+package com.kheyos.service.analyze;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
