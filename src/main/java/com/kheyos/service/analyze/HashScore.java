@@ -35,30 +35,26 @@ public class HashScore implements Runnable {
 	public StatusesFilterEndpoint hosebirdEndpoint ;
 	private Client hosebirdClient;
 	private String trackingKeywords;
-	private String matchTag;
+//	private String matchTag;
 	private Thread t_ReadMessage;
 	private String keyFile;
-	private POSTagger taggerInstance = null;
-    private TreeMap<String, Integer> wordCount;
-    public SortedSet<Map.Entry<String, Integer>> sortedWordSet = new TreeSet<Map.Entry<String, Integer>>(new SetComparator());
+	private TreeMap<String, Integer> wordCount;
+    private Timer updateSetTimer = null;
+    private ArrayList<WordCount> topKWords;
 	
 	public HashScore() {
 
 	}
 
 	public HashScore(String keyFile, String keyword, String match_tag) {
-        taggerInstance = POSTagger.getTaggerInstance();
-
-		this.keyFile = keyFile;
-		this.matchTag = match_tag;
-        this.trackingKeywords = keyword;
+        this.keyFile = keyFile;
+		this.trackingKeywords = keyword;
 		wordCount = new TreeMap<String, Integer>();
-		
-	}
 
-    public TreeMap<String, Integer> getWordCounts() {
-        return wordCount;
-    }
+        updateSetTimer = new Timer();
+        updateSetTimer.schedule(new UpdateTopWords(this), 0, 60000);
+
+	}
 	
 	public void readKeyFromFile() throws IOException {
 		BufferedReader reader = new BufferedReader(new FileReader(keyFile));
@@ -113,7 +109,7 @@ public class HashScore implements Runnable {
 		t_ReadMessage.start();
 	}
 	
-	public void JSONData(String msg) throws JsonProcessingException, IOException {
+	public void JSONData(String msg) throws IOException {
         //read json file data to String
         byte[] jsonData = msg.getBytes();
 
@@ -130,7 +126,7 @@ public class HashScore implements Runnable {
 
         System.out.println("date = " + date);
         //System.out.println("text = "+tweet);
-        ArrayList<String> words = taggerInstance.getWords(tweet);
+        ArrayList<String> words = POSTagger.getWords(tweet);
 
         if (words != null) {
 
@@ -144,40 +140,28 @@ public class HashScore implements Runnable {
                     wordCount.put(eachWord, 1);
                 }
             }
-
-            System.out.println(getTopKWords(5));
-
-            //displayWordCounts();
         }
 	}
 
-    public void displayWordCounts() {
-        for (Map.Entry<String, Integer> eachKey : wordCount.entrySet()) {
-            System.out.println("Word: "+eachKey.getKey());
-            System.out.println("Count: "+eachKey.getValue());
-        }
+    public ArrayList<WordCount> getTopKWords() {
+        return topKWords;
     }
 
-    public ArrayList<WordCount> getTopKWords(int K) {
-        sortedWordSet.addAll(wordCount.entrySet());
-        ArrayList<WordCount> wordCount = new ArrayList<WordCount>();
-        int count = 0;
-        for (Map.Entry<String, Integer> words : sortedWordSet) {
-//            System.out.println("Key: "+words.getKey());
-//            System.out.println("Value: "+words.getValue());
-            wordCount.add(new WordCount(words.getKey(), words.getValue()));
-            count++;
-            if (count == K) {
-                break;
-            }
-        }
-
+    public TreeMap<String, Integer> getWordCount() {
         return wordCount;
     }
-	
-	public void terminate () {
-		hosebirdClient.stop();
-	}
+
+    public void setWordCount(TreeMap<String, Integer> wordCount) {
+        this.wordCount = wordCount;
+    }
+
+    public void setTopKWords(ArrayList<WordCount> topKWords) {
+        this.topKWords = topKWords;
+    }
+
+//    public void terminate () {
+//		hosebirdClient.stop();
+//	}
 
 	public void run() {
 		
