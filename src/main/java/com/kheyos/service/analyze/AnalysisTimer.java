@@ -11,7 +11,7 @@ public class AnalysisTimer {
 	private Cassandra cOp;
 	
 	public AnalysisTimer (HashScore hs, String matchTag) {
-		this.track = hs.track;
+		//this.track = hs.track;
 		this.matchTag = matchTag;
 		this.cOp = new Cassandra();
 		cOp.connect("127.0.0.1");

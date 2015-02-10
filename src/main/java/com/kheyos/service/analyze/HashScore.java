@@ -3,8 +3,7 @@ package com.kheyos.service.analyze;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -39,34 +38,36 @@ public class HashScore implements Runnable {
 	private String matchTag;
 	private Thread t_ReadMessage;
 	private String keyFile;
-	private int trackingFor;
-	public HashMap<Integer,Integer> track;
+	private POSTagger taggerInstance = null;
+    private TreeMap<String, Integer> wordCount;
+    public SortedSet<Map.Entry<String, Integer>> sortedset = new TreeSet<Map.Entry<String, Integer>>(
+            new Comparator<Map.Entry<String, Integer>>() {
+                @Override
+                public int compare(Map.Entry<String, Integer> e1,
+                                   Map.Entry<String, Integer> e2) {
+                    return -(e1.getValue().compareTo(e2.getValue()));
+                }
+            });
 	
-	
-	public HashScore () {
-		
+	public HashScore() {
+
 	}
-	
-	public HashScore (String keyFile, String keyword, String match_tag) {
+
+	public HashScore(String keyFile, String keyword, String match_tag) {
+        taggerInstance = POSTagger.getTaggerInstance();
+
 		this.keyFile = keyFile;
 		this.matchTag = match_tag;
-		track = new HashMap<Integer, Integer>();
-		
-		if (keyword.equals("six") || keyword.equals("SIX") || keyword.equals("6")) {
-			trackingFor = 6;			
-		}
-		else if (keyword.equals("four") || keyword.equals("FOUR") || keyword.equals("4")) {
-			trackingFor = 4;			
-		}
-		else if (keyword.equals("wicket")) {
-			trackingFor = -1;
-		}	
-		track.put(trackingFor, 0);
-		trackingKeywords = matchTag + " " + keyword;
+        this.trackingKeywords = keyword;
+		wordCount = new TreeMap<String, Integer>();
 		
 	}
+
+    public TreeMap<String, Integer> getWordCounts() {
+        return wordCount;
+    }
 	
-	public void readKeyFromFile () throws IOException {
+	public void readKeyFromFile() throws IOException {
 		BufferedReader reader = new BufferedReader(new FileReader(keyFile));
 		
 		consumerKey = reader.readLine();
@@ -77,7 +78,7 @@ public class HashScore implements Runnable {
 		reader.close();
 	}
 	
-	public void setup () {
+	public void setup() {
 		/** Set up your blocking queues: Be sure to size these properly based on expected TPS of your stream */
 		msgQueue = new LinkedBlockingQueue<String>(100000);
 		eventQueue = new LinkedBlockingQueue<Event>(1000);
@@ -93,12 +94,12 @@ public class HashScore implements Runnable {
 		
 	}
 	
-	public void authenticate () {
+	public void authenticate() {
 		// These secrets should be read from a config file
 		hosebirdAuth = new OAuth1(consumerKey, consumerSecret, token, secret);
 	}
 	
-	public void connect () {
+	public void connect() {
 		ClientBuilder builder = new ClientBuilder()
 		  .name("HashScore")                              // optional: mainly for the logs
 		  .hosts(hosebirdHosts)
@@ -113,46 +114,63 @@ public class HashScore implements Runnable {
 	}
 	
 	
-	public void start () throws IOException {
+	public void start() throws IOException {
 				
 		t_ReadMessage = new Thread(this);
 		t_ReadMessage.start();
 	}
 	
-	public void JSONData (String msg) throws JsonProcessingException, IOException {
-		//read json file data to String
-		byte[] jsonData = msg.getBytes();
-		 
-		//create ObjectMapper instance
-		ObjectMapper objectMapper = new ObjectMapper();
-		 
-		//read JSON like DOM Parser
-		JsonNode rootNode = objectMapper.readTree(jsonData);
-		JsonNode dateNode = rootNode.path("created_at");
-		JsonNode tweetNode = rootNode.path("text");
-		
-		String date = dateNode.asText();
-		String tweet = tweetNode.asText(); 
-		int count=0;
-		
-		//System.out.println("date = "+date);
-		//System.out.println("text = "+tweet);
-		
-		if (tweet.contains(trackingKeywords) && track.containsKey(trackingFor)
-				) {
-			
-			count = track.get(trackingFor);			
-			count++;
-			
-			synchronized (track) {
-				track.replace(Integer.parseInt(trackingKeywords), count);	
-			}
-			
-			System.out.println("date = "+date);
-			System.out.println("text = "+tweet);	
-			
-		}
+	public void JSONData(String msg) throws JsonProcessingException, IOException {
+        //read json file data to String
+        byte[] jsonData = msg.getBytes();
+
+        //create ObjectMapper instance
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        //read JSON like DOM Parser
+        JsonNode rootNode = objectMapper.readTree(jsonData);
+        JsonNode dateNode = rootNode.path("created_at");
+        JsonNode tweetNode = rootNode.path("text");
+
+        String date = dateNode.asText();
+        String tweet = tweetNode.asText();
+
+        System.out.println("date = " + date);
+        //System.out.println("text = "+tweet);
+        ArrayList<String> words = taggerInstance.getWords(tweet);
+
+        if (words != null) {
+
+            for (String eachWord : words) {
+                eachWord = eachWord.toLowerCase();
+                if (wordCount.containsKey(eachWord)) {
+                    int count = wordCount.get(eachWord);
+                    count++;
+                    wordCount.replace(eachWord, count);
+                } else {
+                    wordCount.put(eachWord, 1);
+                }
+            }
+
+            getTopKWords();
+            System.out.println(sortedset);
+
+            //displayWordCounts();
+        }
 	}
+
+    public void displayWordCounts() {
+        for (Map.Entry<String, Integer> eachKey : wordCount.entrySet()) {
+            System.out.println("Word: "+eachKey.getKey());
+            System.out.println("Count: "+eachKey.getValue());
+        }
+    }
+
+    public SortedSet<Map.Entry<String, Integer>> getTopKWords() {
+        sortedset.addAll(wordCount.entrySet());
+
+        return sortedset;
+    }
 	
 	public void terminate () {
 		hosebirdClient.stop();

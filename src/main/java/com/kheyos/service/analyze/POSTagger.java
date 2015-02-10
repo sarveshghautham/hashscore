@@ -1,0 +1,70 @@
+package com.kheyos.service.analyze;
+import edu.stanford.nlp.tagger.maxent.MaxentTagger;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+
+/**
+ * Created by sarvesh on 2/9/15.
+ */
+
+public class POSTagger {
+
+    //private static final String f_model = "src/main/resources/models/gate-EN-twitter.model";
+    private static final String f_model = "src/main/resources/models/english-left3words-distsim.tagger";
+    private static MaxentTagger tagger;
+    private static POSTagger taggerObj = null;
+    private static final HashMap<String, Integer> tags = new HashMap<String, Integer>();
+    private POSTagger() {
+    }
+
+    private static void loadTagger() {
+        tagger = new MaxentTagger(f_model);
+        tags.put("JJ", 0);
+        tags.put("JJR", 0);
+        tags.put("JJS", 0);
+        tags.put("NN", 0);
+        tags.put("NNS", 0);
+        tags.put("NNP", 0);
+        tags.put("NNPS", 0);
+        tags.put("RB", 0);
+        tags.put("RBR", 0);
+        tags.put("RBS", 0);
+        tags.put("WRB", 0);
+
+    }
+
+    public static POSTagger getTaggerInstance() {
+        if (taggerObj == null) {
+            taggerObj = new POSTagger();
+            loadTagger();
+        }
+        return taggerObj;
+    }
+
+    public static ArrayList<String> getWords(String tweet) {
+        String tag = tagger.tagString(tweet);
+        ArrayList<String> words = new ArrayList<String>();
+        //System.out.println(tag);
+        String[] tweetSplit = tag.split(" ");
+        for (int i=0; i<tweetSplit.length;i++) {
+            String[] wordSplit = tweetSplit[i].split("_");
+           // System.out.println(wordSplit[0]+" "+PartOfSpeech.get(wordSplit[1]));
+            PartOfSpeech p = PartOfSpeech.get(wordSplit[1]);
+            if (p != null) {
+                if (tags.containsKey(p.getTag())) {
+                    words.add(wordSplit[0]);
+                }
+            }
+        }
+
+        return words;
+    }
+//
+//    public static void main(String []args) {
+//        POSTagger inst = POSTagger.getTaggerInstance();
+//        POSTagger.loadTagger();
+//        POSTagger.getWords("HI");
+//    }
+
+}
