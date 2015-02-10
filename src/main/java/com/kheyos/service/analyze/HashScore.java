@@ -40,14 +40,7 @@ public class HashScore implements Runnable {
 	private String keyFile;
 	private POSTagger taggerInstance = null;
     private TreeMap<String, Integer> wordCount;
-    public SortedSet<Map.Entry<String, Integer>> sortedset = new TreeSet<Map.Entry<String, Integer>>(
-            new Comparator<Map.Entry<String, Integer>>() {
-                @Override
-                public int compare(Map.Entry<String, Integer> e1,
-                                   Map.Entry<String, Integer> e2) {
-                    return -(e1.getValue().compareTo(e2.getValue()));
-                }
-            });
+    public SortedSet<Map.Entry<String, Integer>> sortedWordSet = new TreeSet<Map.Entry<String, Integer>>(new SetComparator());
 	
 	public HashScore() {
 
@@ -152,8 +145,7 @@ public class HashScore implements Runnable {
                 }
             }
 
-            getTopKWords();
-            System.out.println(sortedset);
+            System.out.println(getTopKWords(5));
 
             //displayWordCounts();
         }
@@ -166,10 +158,21 @@ public class HashScore implements Runnable {
         }
     }
 
-    public SortedSet<Map.Entry<String, Integer>> getTopKWords() {
-        sortedset.addAll(wordCount.entrySet());
+    public ArrayList<WordCount> getTopKWords(int K) {
+        sortedWordSet.addAll(wordCount.entrySet());
+        ArrayList<WordCount> wordCount = new ArrayList<WordCount>();
+        int count = 0;
+        for (Map.Entry<String, Integer> words : sortedWordSet) {
+//            System.out.println("Key: "+words.getKey());
+//            System.out.println("Value: "+words.getValue());
+            wordCount.add(new WordCount(words.getKey(), words.getValue()));
+            count++;
+            if (count == K) {
+                break;
+            }
+        }
 
-        return sortedset;
+        return wordCount;
     }
 	
 	public void terminate () {
@@ -212,3 +215,4 @@ public class HashScore implements Runnable {
 		}
 	}
 }
+
