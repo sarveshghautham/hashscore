@@ -3,6 +3,7 @@ package com.kheyos.service.analyze;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Timer;
 
 public class StartReading {
@@ -25,16 +26,22 @@ public class StartReading {
 
         String team1 = br.readLine();
         String team2 = br.readLine();
-
-        //Counting the words in a timer
-        updateWords = new UpdateTopWords(team1, team2);
-        updateSetTimer.schedule(updateWords, 0, 60000);
-
         String matchTag = br.readLine();
+        
+        //Counting the words in a timer
+        updateWords = new UpdateTopWords(team1, team2, matchTag);
+        updateSetTimer.schedule(updateWords, 0, 60000);
+    
+        //Add all keywords to this arraylist
+        ArrayList<String> trackingKeywords = new ArrayList<String>();
+        
 		while ((keywords = br.readLine()) != null) {
-			hs = new HashScore (keyFile, keywords, matchTag, updateWords);
-			hs.start();
+			trackingKeywords.add(keywords);
 		}
+		
+		hs = new HashScore (keyFile, trackingKeywords, updateWords);
+		hs.readTweets();
+		
 		br.close();
 	}
 

@@ -9,13 +9,15 @@ public class UpdateTopWords extends TimerTask{
 
     private String team1;
     private String team2;
+    private String matchTag; 
     private TreeMap<String, Integer> wordCount;
     private Set<Map.Entry<String, Integer>> sortedSet;
     private HashScore hs;
 
-    public UpdateTopWords(String t1, String t2) {
+    public UpdateTopWords(String t1, String t2, String matchTag) {
         this.team1 = t1;
         this.team2 = t2;
+        this.matchTag = matchTag;    
         this.wordCount = new TreeMap<String, Integer>();
         this.sortedSet = new TreeSet<Map.Entry<String, Integer>>(new SetComparator());
     }
@@ -48,5 +50,6 @@ public class UpdateTopWords extends TimerTask{
     public void run() {
         //ArrayList<WordCount> topKWords = getTopKWords(10);
         //setTopKWords(topKWords);
+    	System.out.println("Timer running");
     }
 }

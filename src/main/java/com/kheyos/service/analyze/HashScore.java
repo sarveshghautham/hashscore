@@ -22,7 +22,7 @@ import com.twitter.hbc.core.processor.StringDelimitedProcessor;
 import com.twitter.hbc.httpclient.auth.Authentication;
 import com.twitter.hbc.httpclient.auth.OAuth1;
 
-public class HashScore implements Runnable {
+public class HashScore {
 	
 	private String consumerKey = "";
 	private String consumerSecret = "";
@@ -34,23 +34,18 @@ public class HashScore implements Runnable {
 	private Authentication hosebirdAuth ;
 	public StatusesFilterEndpoint hosebirdEndpoint ;
 	private Client hosebirdClient;
-	private String trackingKeywords;
-	private String matchTag;
-	private Thread t_ReadMessage;
 	private String keyFile;
-	//private TreeMap<String, Integer> wordCount;
-    private ArrayList<WordCount> topKWords;
+	
     private UpdateTopWords updateWords;
     private POSTagger taggerObj;
-
+    private ArrayList<String> trackingKeywords;
 	public HashScore() {
 
 	}
 
-	public HashScore(String keyFile, String keyword, String match_tag, UpdateTopWords wordsInstance) {
+	public HashScore(String keyFile, ArrayList<String> keywords, UpdateTopWords wordsInstance) {
         this.keyFile = keyFile;
-        this.matchTag = match_tag;
-		this.trackingKeywords = keyword;
+		this.trackingKeywords = keywords;
         this.updateWords = wordsInstance;
         this.taggerObj = POSTagger.getTaggerInstance();
 	}
@@ -100,14 +95,7 @@ public class HashScore implements Runnable {
 		// Attempts to establish a connection.
 		hosebirdClient.connect();
 	}
-	
-	
-	public void start() throws IOException {
-				
-		t_ReadMessage = new Thread(this);
-		t_ReadMessage.start();
-	}
-	
+
 	public void JSONData(String msg) throws IOException {
         //read json file data to String
         byte[] jsonData = msg.getBytes();
@@ -129,30 +117,28 @@ public class HashScore implements Runnable {
         if (tweet != null) {
             words = taggerObj.getWords(tweet);
         }
-
-        synchronized (updateWords) {
-            if (words != null) {
-                TreeMap<String, Integer> wordCount = updateWords.getWordCount();
-                for (String eachWord : words) {
-                    eachWord = eachWord.toLowerCase();
-                    if (wordCount.containsKey(eachWord)) {
-                        int count = wordCount.get(eachWord);
-                        count++;
-                        wordCount.replace(eachWord, count);
-                    } else {
-                        wordCount.put(eachWord, 1);
-                    }
+        
+        if (words != null) {
+            TreeMap<String, Integer> wordCount = updateWords.getWordCount();
+            for (String eachWord : words) {
+                eachWord = eachWord.toLowerCase();
+                if (wordCount.containsKey(eachWord)) {
+                    int count = wordCount.get(eachWord);
+                    count++;
+                    wordCount.replace(eachWord, count);
+                } else {
+                    wordCount.put(eachWord, 1);
                 }
             }
         }
-
+   
 	}
 
     public void terminate () {
 		hosebirdClient.stop();
 	}
 
-	public void run() {
+	public void readTweets() {
 		
 		// TODO Auto-generated method stub
 		
@@ -188,4 +174,3 @@ public class HashScore implements Runnable {
 		}
 	}
 }
-
