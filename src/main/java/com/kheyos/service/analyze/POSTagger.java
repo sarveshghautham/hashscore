@@ -13,9 +13,20 @@ public class POSTagger {
     //private static final String f_model = "src/main/resources/models/gate-EN-twitter.model";
     private static final String f_model = "src/main/resources/models/english-left3words-distsim.tagger";
     private static MaxentTagger tagger;
-    private static POSTagger taggerObj = null;
     private static final HashMap<String, Integer> tags = new HashMap<String, Integer>();
     private POSTagger() {
+    }
+
+    private static class POSTaggerSingleton {
+        private static final POSTagger taggerObj = new POSTagger();
+    }
+
+    public static POSTagger getTaggerInstance(){
+
+        if (tagger == null) {
+            loadTagger();
+        }
+        return POSTaggerSingleton.taggerObj;
     }
 
     private static void loadTagger() {
@@ -34,15 +45,7 @@ public class POSTagger {
 
     }
 
-    public static POSTagger getTaggerInstance() {
-        if (taggerObj == null) {
-            taggerObj = new POSTagger();
-            loadTagger();
-        }
-        return taggerObj;
-    }
-
-    public static ArrayList<String> getWords(String tweet) {
+    public ArrayList<String> getWords(String tweet) {
         String tag = tagger.tagString(tweet);
         ArrayList<String> words = new ArrayList<String>();
         //System.out.println(tag);

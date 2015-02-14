@@ -11,45 +11,33 @@ public class StartReading {
     private final String keywordFile = "src/main/resources/keywords.txt";
     private final String scoreFile = "src/main/resources/scores.txt";
     public static HashScore hs = null;
-	public StartReading() {
-		// TODO Auto-generated constructor stub
+    private UpdateTopWords updateWords;
+    private Timer updateSetTimer = null;
+
+    public StartReading() {
+		updateSetTimer = new Timer();
 	}
 	
 	public void startProcess() throws IOException {
 		//Read the keywords and pass the secret.txt file
+        BufferedReader br = new BufferedReader(new FileReader(keywordFile));
+        String keywords="";
 
-		String keywords="";
-		
-		BufferedReader br = new BufferedReader(new FileReader(keywordFile));
-		String matchTag = br.readLine();
+        String team1 = br.readLine();
+        String team2 = br.readLine();
+
+        //Counting the words in a timer
+        updateWords = new UpdateTopWords(team1, team2);
+        updateSetTimer.schedule(updateWords, 0, 60000);
+
+        String matchTag = br.readLine();
 		while ((keywords = br.readLine()) != null) {
-			hs = new HashScore (keyFile, keywords, matchTag);
+			hs = new HashScore (keyFile, keywords, matchTag, updateWords);
 			hs.start();
 		}
 		br.close();
-
-        //readScores();
 	}
 
-    public void readScores() {
-        /* Not doing the score reading part now
-		String []score = new String[2];
-		br = new BufferedReader(new FileReader(scoreFile));
-		Timer readScoreTimer = new Timer();
-		int i = 0;
-
-		//Start reading scores.
-		while ((keywords = br.readLine()) != null) {
-			score[i] = keywords;
-			i++;
-		}
-
-		readScoreTimer.schedule(new ReadScores(hs, matchTag, score[0], score[1]), 0, 60000);
-
-		br.close();
-		*/
-    }
-	
 	public static void main (String []args) throws IOException {
 		StartReading srObj = new StartReading();
 		srObj.startProcess();

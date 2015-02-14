@@ -32,7 +32,7 @@ public class FetchAnalysedResult {
         
         //TODO: JSON serialization
 
-        String response = hs.getTopKWords().toString();
+        String response = "";
         return Response.status(200).entity(response).build();
 
 		

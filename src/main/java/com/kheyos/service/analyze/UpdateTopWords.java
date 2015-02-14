@@ -7,14 +7,25 @@ import java.util.*;
  */
 public class UpdateTopWords extends TimerTask{
 
+    private String team1;
+    private String team2;
     private TreeMap<String, Integer> wordCount;
     private Set<Map.Entry<String, Integer>> sortedSet;
     private HashScore hs;
 
-    public UpdateTopWords(HashScore hs) {
-        this.hs = hs;
-        this.wordCount = hs.getWordCount();
+    public UpdateTopWords(String t1, String t2) {
+        this.team1 = t1;
+        this.team2 = t2;
+        this.wordCount = new TreeMap<String, Integer>();
         this.sortedSet = new TreeSet<Map.Entry<String, Integer>>(new SetComparator());
+    }
+
+    public TreeMap<String, Integer> getWordCount() {
+        return wordCount;
+    }
+
+    public void setWordCount(TreeMap<String, Integer> wordCount) {
+        this.wordCount = wordCount;
     }
 
     public ArrayList<WordCount> getTopKWords(int K) {
@@ -35,7 +46,7 @@ public class UpdateTopWords extends TimerTask{
 
     @Override
     public void run() {
-        ArrayList<WordCount> topKWords = getTopKWords(10);
-        hs.setTopKWords(topKWords);
+        //ArrayList<WordCount> topKWords = getTopKWords(10);
+        //setTopKWords(topKWords);
     }
 }

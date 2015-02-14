@@ -35,25 +35,24 @@ public class HashScore implements Runnable {
 	public StatusesFilterEndpoint hosebirdEndpoint ;
 	private Client hosebirdClient;
 	private String trackingKeywords;
-//	private String matchTag;
+	private String matchTag;
 	private Thread t_ReadMessage;
 	private String keyFile;
-	private TreeMap<String, Integer> wordCount;
-    private Timer updateSetTimer = null;
+	//private TreeMap<String, Integer> wordCount;
     private ArrayList<WordCount> topKWords;
-	
+    private UpdateTopWords updateWords;
+    private POSTagger taggerObj;
+
 	public HashScore() {
 
 	}
 
-	public HashScore(String keyFile, String keyword, String match_tag) {
+	public HashScore(String keyFile, String keyword, String match_tag, UpdateTopWords wordsInstance) {
         this.keyFile = keyFile;
+        this.matchTag = match_tag;
 		this.trackingKeywords = keyword;
-		wordCount = new TreeMap<String, Integer>();
-
-        updateSetTimer = new Timer();
-        updateSetTimer.schedule(new UpdateTopWords(this), 0, 60000);
-
+        this.updateWords = wordsInstance;
+        this.taggerObj = POSTagger.getTaggerInstance();
 	}
 	
 	public void readKeyFromFile() throws IOException {
@@ -125,43 +124,33 @@ public class HashScore implements Runnable {
         String tweet = tweetNode.asText();
 
         System.out.println("date = " + date);
-        //System.out.println("text = "+tweet);
-        ArrayList<String> words = POSTagger.getWords(tweet);
+        System.out.println("text = "+tweet);
+        ArrayList<String> words = null;
+        if (tweet != null) {
+            words = taggerObj.getWords(tweet);
+        }
 
-        if (words != null) {
-
-            for (String eachWord : words) {
-                eachWord = eachWord.toLowerCase();
-                if (wordCount.containsKey(eachWord)) {
-                    int count = wordCount.get(eachWord);
-                    count++;
-                    wordCount.replace(eachWord, count);
-                } else {
-                    wordCount.put(eachWord, 1);
+        synchronized (updateWords) {
+            if (words != null) {
+                TreeMap<String, Integer> wordCount = updateWords.getWordCount();
+                for (String eachWord : words) {
+                    eachWord = eachWord.toLowerCase();
+                    if (wordCount.containsKey(eachWord)) {
+                        int count = wordCount.get(eachWord);
+                        count++;
+                        wordCount.replace(eachWord, count);
+                    } else {
+                        wordCount.put(eachWord, 1);
+                    }
                 }
             }
         }
+
 	}
 
-    public ArrayList<WordCount> getTopKWords() {
-        return topKWords;
-    }
-
-    public TreeMap<String, Integer> getWordCount() {
-        return wordCount;
-    }
-
-    public void setWordCount(TreeMap<String, Integer> wordCount) {
-        this.wordCount = wordCount;
-    }
-
-    public void setTopKWords(ArrayList<WordCount> topKWords) {
-        this.topKWords = topKWords;
-    }
-
-//    public void terminate () {
-//		hosebirdClient.stop();
-//	}
+    public void terminate () {
+		hosebirdClient.stop();
+	}
 
 	public void run() {
 		
