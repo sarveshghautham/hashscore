@@ -12,7 +12,6 @@ public class UpdateTopWords extends TimerTask{
     private String matchTag; 
     private TreeMap<String, Integer> wordCount;
     private Set<Map.Entry<String, Integer>> sortedSet;
-    private HashScore hs;
 
     public UpdateTopWords(String t1, String t2, String matchTag) {
         this.team1 = t1;
