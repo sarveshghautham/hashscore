@@ -32,6 +32,7 @@ public class UpdateTopWords extends TimerTask{
     }
 
     public ArrayList<WordCount> getTopKWords(int K) {
+    	sortedSet = new TreeSet<Map.Entry<String, Integer>>(new SetComparator());
         sortedSet.addAll(wordCount.entrySet());
         ArrayList<WordCount> wordCount = new ArrayList<WordCount>();
         int count = 0;
