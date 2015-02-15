@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Timer;
 
 public class StartReading {
@@ -14,9 +15,15 @@ public class StartReading {
     public static HashScore hs = null;
     private UpdateTopWords updateWords;
     private Timer updateSetTimer = null;
-
+    private HashMap<String, Integer> avoidKeywords; 
     public StartReading() {
 		updateSetTimer = new Timer();
+		avoidKeywords = new HashMap<String, Integer>();
+		
+		//standard keywords to avoid
+		avoidKeywords.put("rt", 0);
+		avoidKeywords.put("#cwc", 0);
+		avoidKeywords.put("#CWC", 0);
 	}
 	
 	public void startProcess() throws IOException {
@@ -33,6 +40,12 @@ public class StartReading {
 	        String team2 = br.readLine();
 	        String matchTag = br.readLine();
 	        
+	        avoidKeywords.put(team1, 0);
+	        avoidKeywords.put(team1.toLowerCase(), 0);
+	        avoidKeywords.put(team2, 0);
+	        avoidKeywords.put(team2.toLowerCase(), 0);
+	        avoidKeywords.put(matchTag, 0);
+	        
 	        //Counting the words in a timer
 	        updateWords = new UpdateTopWords(team1, team2, matchTag);
 	        updateSetTimer.schedule(updateWords, 0, 60000);
@@ -41,10 +54,14 @@ public class StartReading {
 	        ArrayList<String> trackingKeywords = new ArrayList<String>();
 	        
 			while ((keywords = br.readLine()) != null) {
+				if (!avoidKeywords.containsKey(keywords)) {
+					avoidKeywords.put(keywords, 0);
+				}
+				keywords = keywords.toLowerCase();
 				trackingKeywords.add(keywords);
 			}
 			
-			hs = new HashScore (keyFile, trackingKeywords, updateWords);
+			hs = new HashScore (keyFile, trackingKeywords, updateWords, avoidKeywords);
 			hs.readTweets();
 		
 		}	

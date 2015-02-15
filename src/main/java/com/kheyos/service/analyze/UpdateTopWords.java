@@ -13,12 +13,14 @@ public class UpdateTopWords extends TimerTask{
     private TreeMap<String, Integer> wordCount;
     private Set<Map.Entry<String, Integer>> sortedSet;
 
+
     public UpdateTopWords(String t1, String t2, String matchTag) {
         this.team1 = t1;
         this.team2 = t2;
         this.matchTag = matchTag;    
         this.wordCount = new TreeMap<String, Integer>();
         this.sortedSet = new TreeSet<Map.Entry<String, Integer>>(new SetComparator());
+     
     }
 
     public TreeMap<String, Integer> getWordCount() {
@@ -47,8 +49,13 @@ public class UpdateTopWords extends TimerTask{
 
     @Override
     public void run() {
-        //ArrayList<WordCount> topKWords = getTopKWords(10);
-        //setTopKWords(topKWords);
-    	System.out.println("Timer running");
+    	
+    	ArrayList<WordCount> topKWords = getTopKWords(5);
+        for (WordCount w : topKWords) {
+    		System.out.println("Word: "+w.getWord());
+    		System.out.println("count: "+w.getCount());			
+        }
+
+        System.out.println();
     }
 }

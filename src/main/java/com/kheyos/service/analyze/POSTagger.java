@@ -62,12 +62,14 @@ public class POSTagger {
         String[] tweetSplit = tag.split(" ");
         for (int i=0; i<tweetSplit.length;i++) {
             String[] wordSplit = tweetSplit[i].split("_");
-           // System.out.println(wordSplit[0]+" "+PartOfSpeech.get(wordSplit[1]));
-            PartOfSpeech p = PartOfSpeech.get(wordSplit[1]);
-            if (p != null) {
-                if (tags.containsKey(p.getTag())) {
-                    words.add(wordSplit[0]);
-                }
+            
+            if (wordSplit[1] != "") {
+	            PartOfSpeech p = PartOfSpeech.get(wordSplit[1]);
+	            if (p != null) {
+	                if (tags.containsKey(p.getTag())) {
+	                    words.add(wordSplit[0]);
+	                }
+	            }
             }
         }
 

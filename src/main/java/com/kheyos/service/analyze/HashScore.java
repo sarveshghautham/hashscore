@@ -40,15 +40,17 @@ public class HashScore {
     private UpdateTopWords updateWords;
     private POSTagger taggerObj;
     private ArrayList<String> trackingKeywords;
+    private HashMap<String, Integer> avoidKeywords;
 	public HashScore() {
 
 	}
 
-	public HashScore(String keyFile, ArrayList<String> keywords, UpdateTopWords wordsInstance) {
+	public HashScore(String keyFile, ArrayList<String> keywords, UpdateTopWords wordsInstance, HashMap<String, Integer> avoidKeywordsMap) {
         this.keyFile = keyFile;
 		this.trackingKeywords = keywords;
         this.updateWords = wordsInstance;
         this.taggerObj = POSTagger.getTaggerInstance();
+        this.avoidKeywords = avoidKeywordsMap;
 	}
 	
 	public void readKeyFromFile() throws IOException {
@@ -124,8 +126,9 @@ public class HashScore {
         String date = dateNode.asText();
         String tweet = tweetNode.asText();
 
-        System.out.println("date = " + date);
-        System.out.println("text = "+tweet);
+//        System.out.println("date = " + date);
+//        System.out.println("text = "+tweet);
+        
         ArrayList<String> words = null;
         if (tweet != null) {
             words = taggerObj.getWords(tweet);
@@ -134,14 +137,17 @@ public class HashScore {
         if (words != null) {
             TreeMap<String, Integer> wordCount = updateWords.getWordCount();
             for (String eachWord : words) {
-                eachWord = eachWord.toLowerCase();
-                if (wordCount.containsKey(eachWord)) {
-                    int count = wordCount.get(eachWord);
-                    count++;
-                    wordCount.replace(eachWord, count);
-                } else {
-                    wordCount.put(eachWord, 1);
-                }
+            	eachWord = eachWord.toLowerCase();
+            	if (!avoidKeywords.containsKey(eachWord)) {
+	                
+	                if (wordCount.containsKey(eachWord)) {
+	                    int count = wordCount.get(eachWord);
+	                    count++;
+	                    wordCount.replace(eachWord, count);
+	                } else {
+	                    wordCount.put(eachWord, 1);
+	                }
+            	}
             }
         }
    
