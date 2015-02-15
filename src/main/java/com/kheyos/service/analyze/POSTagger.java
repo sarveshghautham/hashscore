@@ -1,6 +1,11 @@
 package com.kheyos.service.analyze;
 import edu.stanford.nlp.tagger.maxent.MaxentTagger;
 
+import java.io.File;
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -10,8 +15,7 @@ import java.util.HashMap;
 
 public class POSTagger {
 
-    //private static final String f_model = "src/main/resources/models/gate-EN-twitter.model";
-    private static final String f_model = "src/main/resources/models/english-left3words-distsim.tagger";
+    private static final String f_model = "models/english-left3words-distsim.tagger";
     private static MaxentTagger tagger;
     private static final HashMap<String, Integer> tags = new HashMap<String, Integer>();
     private POSTagger() {
@@ -24,13 +28,23 @@ public class POSTagger {
     public static POSTagger getTaggerInstance(){
 
         if (tagger == null) {
-            loadTagger();
+            try {
+				loadTagger();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
         }
         return POSTaggerSingleton.taggerObj;
     }
 
-    private static void loadTagger() {
-        tagger = new MaxentTagger(f_model);
+    private static void loadTagger() throws IOException {
+    	
+    	tagger = new MaxentTagger(f_model);
+    	if (tagger == null) {
+    		throw new RuntimeException("tagger not loaded");
+    	}
+        
         tags.put("JJ", 0);
         tags.put("JJR", 0);
         tags.put("JJS", 0);

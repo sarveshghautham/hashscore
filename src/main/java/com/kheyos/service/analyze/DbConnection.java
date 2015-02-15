@@ -1,19 +1,27 @@
 package com.kheyos.service.analyze;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+
+import javax.management.RuntimeErrorException;
 
 /**
  * Created by sarvesh on 2/14/15.
  */
 public class DbConnection {
 
-    private static final String propertiesFile = "src/main/resources/mysql_user.properties";
+    private static final String propertiesFile = "/mysql_user.properties";
     private static String username;
     private static String password;
     private static Connection connection = null;
@@ -37,10 +45,15 @@ public class DbConnection {
         return SingletonHelper.INSTANCE;
     }
 
-    private static void loadProperties() {
-        BufferedReader br = null;
+    private static void loadProperties() throws IOException {
+    	
+    	InputStream stream = StartReading.class.getResourceAsStream(propertiesFile);
+    	BufferedReader br = null;
+    	
         try {
-            br = new BufferedReader(new FileReader(propertiesFile));
+        	
+            br = new BufferedReader(new InputStreamReader(stream));
+            
             ipAddress = br.readLine();
             port = br.readLine();
             dbName = br.readLine();
@@ -50,38 +63,38 @@ public class DbConnection {
 
         } catch (FileNotFoundException e) {
             e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
+        }
+        finally {
+       
+        	if (br != null)
+        		br.close();
         }
     }
 
     private static void makeConnection() {
 
-        loadProperties();
-
         try {
+        	loadProperties();
             Class.forName("com.mysql.jdbc.Driver");
+            String url = "jdbc:mysql://"+ipAddress+":"+port+"/"+dbName;
+            connection = DriverManager
+                    .getConnection(url, username, password);
+            
+            if (connection == null) {
+                System.out.println("Connection failed");
+            }
+            
         } catch (ClassNotFoundException e) {
             System.out.println("ERROR: No driver found!");
             e.printStackTrace();
             return;
-        }
-
-        String url = "jdbc:mysql://"+ipAddress+":"+port+"/"+dbName;
-
-        try {
-            connection = DriverManager
-                    .getConnection(url, username, password);
-
-        } catch (SQLException e) {
-            System.out.println("Connection Failed! Check output console");
-            e.printStackTrace();
-            return;
-        }
-
-        if (connection == null) {
-            System.out.println("Connection failed");
-        }
+        } catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
     }
 
     public void closeConnection() {
