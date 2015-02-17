@@ -5,3 +5,5 @@
 
 src/.DS_Store
 /target/
+
+src/main/resources/mysql_user.properties
