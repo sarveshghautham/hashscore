@@ -154,7 +154,9 @@ public class HashScore {
 				JSONData(msg);
 			}
 			
-		} catch (IOException | InterruptedException e1) {
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (InterruptedException e1) {
 			e1.printStackTrace();
 		}
 		
