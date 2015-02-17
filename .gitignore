@@ -8,3 +8,5 @@ src/.DS_Store
 
 src/main/resources/mysql_user.properties
 src/main/resources/secret.txt
+
+.DS_Store
