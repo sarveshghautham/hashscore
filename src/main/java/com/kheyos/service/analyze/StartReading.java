@@ -38,30 +38,27 @@ public class StartReading {
 
 	        String team1 = br.readLine();
 	        String team2 = br.readLine();
-	        String matchTag = br.readLine();
+	        int matchId = Integer.parseInt(br.readLine());
 	        
 	        avoidKeywords.put(team1, 0);
 	        avoidKeywords.put(team1.toLowerCase(), 0);
 	        avoidKeywords.put(team2, 0);
 	        avoidKeywords.put(team2.toLowerCase(), 0);
-	        avoidKeywords.put(matchTag, 0);
 	        
 	        //Counting the words in a timer
-	        updateWords = new UpdateTopWords(team1, team2, matchTag);
+	        updateWords = new UpdateTopWords(team1, team2, matchId, avoidKeywords);
 	        updateSetTimer.schedule(updateWords, 0, 60000);
 	    
 	        //Add all keywords to this arraylist
 	        ArrayList<String> trackingKeywords = new ArrayList<String>();
 	        
 			while ((keywords = br.readLine()) != null) {
-				if (!avoidKeywords.containsKey(keywords)) {
-					avoidKeywords.put(keywords, 0);
-				}
+				avoidKeywords.put(keywords, 0);
 				keywords = keywords.toLowerCase();
 				trackingKeywords.add(keywords);
 			}
 			
-			hs = new HashScore (keyFile, trackingKeywords, updateWords, avoidKeywords);
+			hs = new HashScore (keyFile, trackingKeywords, updateWords);
 			hs.readTweets();
 		
 		}	

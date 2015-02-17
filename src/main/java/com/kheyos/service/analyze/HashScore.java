@@ -40,17 +40,16 @@ public class HashScore {
     private UpdateTopWords updateWords;
     private POSTagger taggerObj;
     private ArrayList<String> trackingKeywords;
-    private HashMap<String, Integer> avoidKeywords;
+
 	public HashScore() {
 
 	}
 
-	public HashScore(String keyFile, ArrayList<String> keywords, UpdateTopWords wordsInstance, HashMap<String, Integer> avoidKeywordsMap) {
+	public HashScore(String keyFile, ArrayList<String> keywords, UpdateTopWords wordsInstance) {
         this.keyFile = keyFile;
 		this.trackingKeywords = keywords;
         this.updateWords = wordsInstance;
         this.taggerObj = POSTagger.getTaggerInstance();
-        this.avoidKeywords = avoidKeywordsMap;
 	}
 	
 	public void readKeyFromFile() throws IOException {
@@ -132,25 +131,10 @@ public class HashScore {
         ArrayList<String> words = null;
         if (tweet != null) {
             words = taggerObj.getWords(tweet);
-        }
-        
-        if (words != null) {
-            TreeMap<String, Integer> wordCount = updateWords.getWordCount();
-            for (String eachWord : words) {
-            	eachWord = eachWord.toLowerCase();
-            	if (!avoidKeywords.containsKey(eachWord)) {
-	                
-	                if (wordCount.containsKey(eachWord)) {
-	                    int count = wordCount.get(eachWord);
-	                    count++;
-	                    wordCount.replace(eachWord, count);
-	                } else {
-	                    wordCount.put(eachWord, 1);
-	                }
-            	}
+            if (words != null) {
+                updateWords.updateWordsInMap(words);
             }
         }
-   
 	}
 
     public void terminate () {
@@ -159,37 +143,20 @@ public class HashScore {
 
 	public void readTweets() {
 		
-		// TODO Auto-generated method stub
-		
-	    try {
+		try {
 			readKeyFromFile();
-		} catch (IOException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
-		setup();
-		authenticate();
-		connect();
-		
-		while (!hosebirdClient.isDone()) {
-			String msg = "";
-			try {
-				msg = msgQueue.take();
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+			setup();
+			authenticate();
+			connect();
+			
+			while (!hosebirdClient.isDone()) {
+				String msg = msgQueue.take();
+				JSONData(msg);
 			}
 			
-			try {
-				JSONData(msg);
-			} catch (JsonProcessingException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			//System.out.println(msg);					
+		} catch (IOException | InterruptedException e1) {
+			e1.printStackTrace();
 		}
+		
 	}
 }

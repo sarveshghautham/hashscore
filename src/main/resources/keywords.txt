@@ -1,9 +1,6 @@
-India
-Pakistan
-#indvspak
+West Indies
+IreLand
+9
 #cwc15
-#indvspak
-#indvpak
-#pakvsind
-#pakvind
-#indwins
+#nzvssco
+#nzvsco

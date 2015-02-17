@@ -7,6 +7,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 /**
@@ -52,7 +53,6 @@ public class DbConnection {
             dbName = br.readLine();
             username = br.readLine();
             password = br.readLine();
-            br.close();
 
         } catch (FileNotFoundException e) {
             e.printStackTrace();
@@ -89,7 +89,20 @@ public class DbConnection {
 			e.printStackTrace();
 		}
     }
+    
+    public String getDbName() {
+    	return dbName;
+    }
+    
+    public Connection getConnection() {
+    	return connection;
+    }
 
+    public void insertIntoDb(String query, String word, int count) {
+    
+    	
+    }
+    
     public void closeConnection() {
         try {
             connection.close();
