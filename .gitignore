@@ -7,3 +7,4 @@ src/.DS_Store
 /target/
 
 src/main/resources/mysql_user.properties
+src/main/resources/secret.txt
