@@ -1,8 +1,9 @@
 package com.kheyos.service.analyze;
 
 import java.io.BufferedReader;
-import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -22,7 +23,7 @@ import com.twitter.hbc.core.processor.StringDelimitedProcessor;
 import com.twitter.hbc.httpclient.auth.Authentication;
 import com.twitter.hbc.httpclient.auth.OAuth1;
 
-public class HashScore implements Runnable {
+public class HashScore {
 	
 	private String consumerKey = "";
 	private String consumerSecret = "";
@@ -34,36 +35,44 @@ public class HashScore implements Runnable {
 	private Authentication hosebirdAuth ;
 	public StatusesFilterEndpoint hosebirdEndpoint ;
 	private Client hosebirdClient;
-	private String trackingKeywords;
-	private String matchTag;
-	private Thread t_ReadMessage;
 	private String keyFile;
-	//private TreeMap<String, Integer> wordCount;
-    private ArrayList<WordCount> topKWords;
+	
     private UpdateTopWords updateWords;
     private POSTagger taggerObj;
+    private ArrayList<String> trackingKeywords;
 
 	public HashScore() {
 
 	}
 
-	public HashScore(String keyFile, String keyword, String match_tag, UpdateTopWords wordsInstance) {
+	public HashScore(String keyFile, ArrayList<String> keywords, UpdateTopWords wordsInstance) {
         this.keyFile = keyFile;
-        this.matchTag = match_tag;
-		this.trackingKeywords = keyword;
+		this.trackingKeywords = keywords;
         this.updateWords = wordsInstance;
         this.taggerObj = POSTagger.getTaggerInstance();
 	}
 	
 	public void readKeyFromFile() throws IOException {
-		BufferedReader reader = new BufferedReader(new FileReader(keyFile));
 		
-		consumerKey = reader.readLine();
-		consumerSecret = reader.readLine();
-		token = reader.readLine();
-		secret = reader.readLine();
+		InputStream stream = StartReading.class.getResourceAsStream(keyFile);
 		
-		reader.close();
+		BufferedReader reader = null;
+		
+		try {
+		
+			reader = new BufferedReader(new InputStreamReader(stream));
+			
+			consumerKey = reader.readLine();
+			consumerSecret = reader.readLine();
+			token = reader.readLine();
+			secret = reader.readLine();
+			
+		} 
+		finally {
+			if (reader != null)
+				reader.close();
+		}
+		
 	}
 	
 	public void setup() {
@@ -100,14 +109,7 @@ public class HashScore implements Runnable {
 		// Attempts to establish a connection.
 		hosebirdClient.connect();
 	}
-	
-	
-	public void start() throws IOException {
-				
-		t_ReadMessage = new Thread(this);
-		t_ReadMessage.start();
-	}
-	
+
 	public void JSONData(String msg) throws IOException {
         //read json file data to String
         byte[] jsonData = msg.getBytes();
@@ -123,69 +125,40 @@ public class HashScore implements Runnable {
         String date = dateNode.asText();
         String tweet = tweetNode.asText();
 
-        System.out.println("date = " + date);
-        System.out.println("text = "+tweet);
+//        System.out.println("date = " + date);
+//        System.out.println("text = "+tweet);
+        
         ArrayList<String> words = null;
         if (tweet != null) {
             words = taggerObj.getWords(tweet);
-        }
-
-        synchronized (updateWords) {
             if (words != null) {
-                TreeMap<String, Integer> wordCount = updateWords.getWordCount();
-                for (String eachWord : words) {
-                    eachWord = eachWord.toLowerCase();
-                    if (wordCount.containsKey(eachWord)) {
-                        int count = wordCount.get(eachWord);
-                        count++;
-                        wordCount.replace(eachWord, count);
-                    } else {
-                        wordCount.put(eachWord, 1);
-                    }
-                }
+                updateWords.updateWordsInMap(words);
             }
         }
-
 	}
 
     public void terminate () {
 		hosebirdClient.stop();
 	}
 
-	public void run() {
+	public void readTweets() {
 		
-		// TODO Auto-generated method stub
-		
-	    try {
+		try {
 			readKeyFromFile();
-		} catch (IOException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
-		setup();
-		authenticate();
-		connect();
-		
-		while (!hosebirdClient.isDone()) {
-			String msg = "";
-			try {
-				msg = msgQueue.take();
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+			setup();
+			authenticate();
+			connect();
+			
+			while (!hosebirdClient.isDone()) {
+				String msg = msgQueue.take();
+				JSONData(msg);
 			}
 			
-			try {
-				JSONData(msg);
-			} catch (JsonProcessingException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			//System.out.println(msg);					
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (InterruptedException e1) {
+			e1.printStackTrace();
 		}
+		
 	}
 }
-

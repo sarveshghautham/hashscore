@@ -1,4 +1,8 @@
-HashScore
-=========
+HashScore 1.0 BETA
+===================
 
-Score prediction system by analyzing the twitter feed
+Analyzing Twitter Feed for various hashtags to come up with top K words used during a cricket match.
+
+Currently testing with World Cup matches. 
+
+More updates to come.
