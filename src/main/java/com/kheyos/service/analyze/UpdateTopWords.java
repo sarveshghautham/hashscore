@@ -83,7 +83,6 @@ public class UpdateTopWords extends TimerTask{
     	PreparedStatement insertHistoryQuery = null;
     	PreparedStatement updateQuery = null;
     	PreparedStatement updateHistoryQuery = null;
-    	PreparedStatement selectQuery = null;
     	PreparedStatement selectLastId = null;
     	PreparedStatement selectExistingQuery = null;
     	
@@ -93,19 +92,16 @@ public class UpdateTopWords extends TimerTask{
     	String query = "INSERT INTO word_tracker (match_id, word, count) "
     			+ "VALUES (?,?,?)";
     	
-		String historyQuery = "INSERT INTO word_history (word_id, updated_time) "
-				+ "VALUES (?,?)";
+		String historyQuery = "INSERT INTO word_history (word_id, count, updated_time) "
+				+ "VALUES (?,?,?)";
 		
-		String selectLastIdquery = "SELECT word_id FROM word_tracker "
+		String selectLastIdQuery = "SELECT word_id FROM word_tracker "
 				+ "WHERE word=? AND match_id=?";
 		
     	String updateWordQuery = "UPDATE "+db.getDbName()+".word_tracker "
     			+ "SET count=? "
     			+ "WHERE word=?";
-		
-		String getWordIdQuery = "SELECT word_id FROM word_tracker "
-				+ "WHERE word=?";
-		
+
 		String updateWordHistoryQuery = "UPDATE "+db.getDbName()+".word_history "
     			+ "SET updated_time=? "
     			+ "WHERE word_id=?";
@@ -114,9 +110,8 @@ public class UpdateTopWords extends TimerTask{
 	   	Timestamp timestamp = new Timestamp(date.getTime());
 	   	
     	selectExistingQuery = con.prepareStatement(existingQuery);
-    	
     	int dbCount = 0;
-    	
+
     	for (Map.Entry<String, Integer> mapValues : wordCount.entrySet()) {
 
         	String word = mapValues.getKey();
@@ -140,22 +135,21 @@ public class UpdateTopWords extends TimerTask{
     			   	    updateQuery.setInt(1, count);
     			   	    updateQuery.setString(2, word);
     			   	    updateQuery.executeUpdate();
-    			   	    
-    			   	    //Get word id from tracker table
-    			   	    selectQuery = con.prepareStatement(getWordIdQuery);
-    			   	    selectQuery.setString(1, word);
-    			   	    
-    			   	    ResultSet rs = selectQuery.executeQuery();
-    			   	    int wordId=0;
-    			   	    while(rs.next()) {
-    				   	    wordId = rs.getInt("word_id");
-    			   	    }
-    			   	
-    			   	    //Updating history table
-    			   	    updateHistoryQuery = con.prepareStatement(updateWordHistoryQuery);
-    			   	    updateHistoryQuery.setTimestamp(1, timestamp);
-    			   	    updateHistoryQuery.setInt(2, wordId);
-    			   	    con.commit();
+
+                        selectLastId = con.prepareStatement(selectLastIdQuery);
+                        selectLastId.setString(1, word);
+                        selectLastId.setInt(2, matchId);
+                        ResultSet rs = selectLastId.executeQuery();
+                        int wordId=0;
+                        if (rs.next()) {
+
+                            //Insert the new count in history table
+                            insertHistoryQuery = con.prepareStatement(historyQuery);
+                            insertHistoryQuery.setInt(1, wordId);
+                            insertHistoryQuery.setInt(2, count);
+                            insertHistoryQuery.setTimestamp(3, timestamp);
+                            con.commit();
+                        }
     			   	    
     			   	} catch (SQLException e ) {
     		   	        e.printStackTrace();
@@ -171,12 +165,62 @@ public class UpdateTopWords extends TimerTask{
     		   	        if (updateQuery != null) {
     		   	            updateQuery.close();
     		   	        }
-    		   	        
+
+                        if (selectLastId != null) {
+                            selectLastId.close();
+                        }
+
+                        if (insertHistoryQuery != null) {
+                            insertHistoryQuery.close();
+                        }
+
     		   	        con.setAutoCommit(true);
     		   	    }
         		}
+                else {
+
+                    //Get word id from tracker table
+                    selectLastId = con.prepareStatement(selectLastIdQuery);
+                    int lastId = 0;
+                    selectLastId.setString(1, word);
+                    selectLastId.setInt(2, matchId);
+                    ResultSet rs = selectLastId.executeQuery();
+                    int wordId=0;
+                    if (rs.next()) {
+                        wordId = rs.getInt("word_id");
+
+                        try {
+                            //Insert the new count in history table
+                            updateHistoryQuery = con.prepareStatement(updateWordHistoryQuery);
+                            updateHistoryQuery.setTimestamp(1, timestamp);
+                            insertHistoryQuery.setInt(2, wordId);
+                            con.commit();
+
+                        } catch (SQLException e ) {
+                            e.printStackTrace();
+                            if (con != null) {
+                                try {
+                                    System.err.print("Transaction is being rolled back");
+                                    con.rollback();
+                                } catch(SQLException excep) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        } finally {
+                            if (updateHistoryQuery != null) {
+                                updateHistoryQuery.close();
+                            }
+
+                            if (selectLastId != null) {
+                                selectLastId.close();
+                            }
+
+                            con.setAutoCommit(true);
+                        }
+                    }
+                }
         	}
-        	else {
+            else {
         		
         	   //First time occurring. So insert.
 				try {
@@ -189,22 +233,22 @@ public class UpdateTopWords extends TimerTask{
 			   	    insertQuery.setInt(3, count);
 			   	    insertQuery.executeUpdate();
 			   	    
-			   	    selectLastId = con.prepareStatement(selectLastIdquery);
+			   	    selectLastId = con.prepareStatement(selectLastIdQuery);
 				   	int lastId = 0;
 				   	selectLastId.setString(1, word);
 				   	selectLastId.setInt(2, matchId);
 				   	ResultSet rs = selectLastId.executeQuery();
-				   	if (rs.next()){
-				   	    lastId = rs.getInt("word_id");
-				   	}
-			   	    
-			   	    //History table
-			   	   	insertHistoryQuery = con.prepareStatement(historyQuery);
-				   	insertHistoryQuery.setInt(1, lastId);
-				   	insertHistoryQuery.setTimestamp(2, timestamp);
-			   	    insertHistoryQuery.executeUpdate();
-			   	    con.commit();
-			   	    
+				   	if (rs.next()) {
+                        lastId = rs.getInt("word_id");
+
+                        //History table
+                        insertHistoryQuery = con.prepareStatement(historyQuery);
+                        insertHistoryQuery.setInt(1, lastId);
+                        insertHistoryQuery.setInt(2, count);
+                        insertHistoryQuery.setTimestamp(3, timestamp);
+                        insertHistoryQuery.executeUpdate();
+                        con.commit();
+                    }
 			   	} catch (SQLException e ) {
 		   	        e.printStackTrace();
 		   	        if (con != null) {
@@ -219,6 +263,14 @@ public class UpdateTopWords extends TimerTask{
 		   	        if (insertQuery != null) {
 		   	            insertQuery.close();
 		   	        }
+
+                    if (selectLastId != null) {
+                        selectLastId.close();
+                    }
+
+                    if (insertHistoryQuery != null) {
+                        insertHistoryQuery.close();
+                    }
 		   	        
 		   	        con.setAutoCommit(true);
 		   	    }

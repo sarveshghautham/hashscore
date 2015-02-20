@@ -35,18 +35,7 @@
     <orderEntry type="library" name="Maven: com.fasterxml.jackson.core:jackson-databind:2.4.1" level="project" />
     <orderEntry type="library" name="Maven: com.fasterxml.jackson.core:jackson-annotations:2.4.0" level="project" />
     <orderEntry type="library" name="Maven: com.fasterxml.jackson.core:jackson-core:2.4.1" level="project" />
-    <orderEntry type="library" name="Maven: com.datastax.cassandra:cassandra-driver-core:2.0.4" level="project" />
-    <orderEntry type="library" name="Maven: io.netty:netty:3.9.0.Final" level="project" />
-    <orderEntry type="library" name="Maven: com.codahale.metrics:metrics-core:3.0.2" level="project" />
     <orderEntry type="library" name="Maven: org.jsoup:jsoup:1.7.3" level="project" />
-    <orderEntry type="library" name="Maven: org.jboss.resteasy:resteasy-jaxrs:3.0.4.Final" level="project" />
-    <orderEntry type="library" name="Maven: org.jboss.resteasy:jaxrs-api:3.0.4.Final" level="project" />
-    <orderEntry type="library" name="Maven: org.scannotation:scannotation:1.0.3" level="project" />
-    <orderEntry type="library" name="Maven: javassist:javassist:3.12.1.GA" level="project" />
-    <orderEntry type="library" name="Maven: org.jboss.spec.javax.annotation:jboss-annotations-api_1.1_spec:1.0.1.Final" level="project" />
-    <orderEntry type="library" name="Maven: javax.activation:activation:1.1" level="project" />
-    <orderEntry type="library" name="Maven: commons-io:commons-io:2.1" level="project" />
-    <orderEntry type="library" name="Maven: net.jcip:jcip-annotations:1.0" level="project" />
     <orderEntry type="library" name="Maven: mysql:mysql-connector-java:5.1.6" level="project" />
     <orderEntry type="library" name="Maven: edu.stanford.nlp:stanford-corenlp:3.4.1" level="project" />
     <orderEntry type="library" name="Maven: com.io7m.xom:xom:1.2.10" level="project" />
