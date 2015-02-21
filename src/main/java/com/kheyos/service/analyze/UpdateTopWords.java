@@ -134,13 +134,6 @@ public class UpdateTopWords extends TimerTask{
     			   	    updateQuery.setInt(2, wordId);
     			   	    updateQuery.executeUpdate();
 
-                        System.out.println("Inserting into history table");
-                        System.out.println("Word ID: " + wordId);
-                        System.out.println("Word: "+word);
-                        System.out.println("DB count: "+dbCount);
-                        System.out.println("Count: " + count);
-                        System.out.println("Timestamp: " + timestamp);
-
                         //Insert the new count in history table
                         insertHistoryQuery = con.prepareStatement(insertIntoWordHistoryQuery);
                         insertHistoryQuery.setInt(1, wordId);
@@ -197,12 +190,6 @@ public class UpdateTopWords extends TimerTask{
 				   	ResultSet rs = selectLastId.executeQuery();
 				   	if (rs.next()) {
                         lastId = rs.getInt("word_id");
-
-//                        System.out.println("Inserting first time into history table");
-//                        System.out.println("Word ID: "+lastId);
-//                        System.out.println("Word: "+word);
-//                        System.out.println("Count: "+count);
-//                        System.out.println("Timestamp: "+timestamp);
 
                         //History table
                         insertHistoryQuery = con.prepareStatement(insertIntoWordHistoryQuery);
