@@ -86,13 +86,13 @@ public class UpdateTopWords extends TimerTask{
     	PreparedStatement selectLastId = null;
     	PreparedStatement selectExistingQuery = null;
     	
-    	String existingQuery = "SELECT count FROM word_tracker "
+    	String existingQuery = "SELECT word_id, count FROM word_tracker "
     			+ "WHERE word=? AND match_id=?";
     	
-    	String query = "INSERT INTO word_tracker (match_id, word, count) "
+    	String insertIntoWordTrackerQuery = "INSERT INTO word_tracker (match_id, word, count) "
     			+ "VALUES (?,?,?)";
     	
-		String historyQuery = "INSERT INTO word_history (word_id, count, updated_time) "
+		String insertIntoWordHistoryQuery = "INSERT INTO word_history (word_id, count, updated_time) "
 				+ "VALUES (?,?,?)";
 		
 		String selectLastIdQuery = "SELECT word_id FROM word_tracker "
@@ -120,11 +120,14 @@ public class UpdateTopWords extends TimerTask{
         	selectExistingQuery.setString(1, word);
         	selectExistingQuery.setInt(2, matchId);
         	ResultSet rs1 = selectExistingQuery.executeQuery();
-        	
+
+            //If the word exists
         	if (rs1.next()) {
         		
         		dbCount = rs1.getInt("count");
-        		
+                int wordId = rs1.getInt("word_id");
+
+                //If the counts don't match update it
         		if (dbCount != count) {
         			        			
         			try {
@@ -136,20 +139,13 @@ public class UpdateTopWords extends TimerTask{
     			   	    updateQuery.setString(2, word);
     			   	    updateQuery.executeUpdate();
 
-                        selectLastId = con.prepareStatement(selectLastIdQuery);
-                        selectLastId.setString(1, word);
-                        selectLastId.setInt(2, matchId);
-                        ResultSet rs = selectLastId.executeQuery();
-                        int wordId=0;
-                        if (rs.next()) {
+                        //Insert the new count in history table
+                        insertHistoryQuery = con.prepareStatement(insertIntoWordHistoryQuery);
+                        insertHistoryQuery.setInt(1, wordId);
+                        insertHistoryQuery.setInt(2, count);
+                        insertHistoryQuery.setTimestamp(3, timestamp);
+                        con.commit();
 
-                            //Insert the new count in history table
-                            insertHistoryQuery = con.prepareStatement(historyQuery);
-                            insertHistoryQuery.setInt(1, wordId);
-                            insertHistoryQuery.setInt(2, count);
-                            insertHistoryQuery.setTimestamp(3, timestamp);
-                            con.commit();
-                        }
     			   	    
     			   	} catch (SQLException e ) {
     		   	        e.printStackTrace();
@@ -177,55 +173,13 @@ public class UpdateTopWords extends TimerTask{
     		   	        con.setAutoCommit(true);
     		   	    }
         		}
-                else {
-
-                    //Get word id from tracker table
-                    selectLastId = con.prepareStatement(selectLastIdQuery);
-                    int lastId = 0;
-                    selectLastId.setString(1, word);
-                    selectLastId.setInt(2, matchId);
-                    ResultSet rs = selectLastId.executeQuery();
-                    int wordId=0;
-                    if (rs.next()) {
-                        wordId = rs.getInt("word_id");
-
-                        try {
-                            //Insert the new count in history table
-                            updateHistoryQuery = con.prepareStatement(updateWordHistoryQuery);
-                            updateHistoryQuery.setTimestamp(1, timestamp);
-                            insertHistoryQuery.setInt(2, wordId);
-                            con.commit();
-
-                        } catch (SQLException e ) {
-                            e.printStackTrace();
-                            if (con != null) {
-                                try {
-                                    System.err.print("Transaction is being rolled back");
-                                    con.rollback();
-                                } catch(SQLException excep) {
-                                    e.printStackTrace();
-                                }
-                            }
-                        } finally {
-                            if (updateHistoryQuery != null) {
-                                updateHistoryQuery.close();
-                            }
-
-                            if (selectLastId != null) {
-                                selectLastId.close();
-                            }
-
-                            con.setAutoCommit(true);
-                        }
-                    }
-                }
         	}
             else {
         		
         	   //First time occurring. So insert.
 				try {
 			   		con.setAutoCommit(false);
-			   	    insertQuery = con.prepareStatement(query);
+			   	    insertQuery = con.prepareStatement(insertIntoWordTrackerQuery);
 			   	    
 			   	    //Tracker table
 			   	    insertQuery.setInt(1, matchId);
@@ -242,7 +196,7 @@ public class UpdateTopWords extends TimerTask{
                         lastId = rs.getInt("word_id");
 
                         //History table
-                        insertHistoryQuery = con.prepareStatement(historyQuery);
+                        insertHistoryQuery = con.prepareStatement(insertIntoWordHistoryQuery);
                         insertHistoryQuery.setInt(1, lastId);
                         insertHistoryQuery.setInt(2, count);
                         insertHistoryQuery.setTimestamp(3, timestamp);

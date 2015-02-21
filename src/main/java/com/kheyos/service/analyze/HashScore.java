@@ -1,12 +1,11 @@
 package com.kheyos.service.analyze;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -119,15 +118,10 @@ public class HashScore {
 
         //read JSON like DOM Parser
         JsonNode rootNode = objectMapper.readTree(jsonData);
-        JsonNode dateNode = rootNode.path("created_at");
         JsonNode tweetNode = rootNode.path("text");
 
-        String date = dateNode.asText();
-        String tweet = tweetNode.asText();
+        String tweet = cleanTweets(tweetNode.asText());
 
-//        System.out.println("date = " + date);
-//        System.out.println("text = "+tweet);
-        
         ArrayList<String> words = null;
         if (tweet != null) {
             words = taggerObj.getWords(tweet);
@@ -136,6 +130,28 @@ public class HashScore {
             }
         }
 	}
+
+    public String cleanTweets(String tweet) {
+
+        String cleanTweet = "";
+        try {
+            byte[] utf8Bytes = tweet.getBytes("UTF-8");
+
+            cleanTweet = new String(utf8Bytes, "UTF-8");
+
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+
+        Pattern unicodeOutliers = Pattern.compile("[^\\x00-\\x7F]",
+                Pattern.UNICODE_CASE | Pattern.CANON_EQ
+                        | Pattern.CASE_INSENSITIVE);
+        Matcher unicodeOutlierMatcher = unicodeOutliers.matcher(cleanTweet);
+        cleanTweet = unicodeOutlierMatcher.replaceAll("");
+
+        return cleanTweet;
+
+    }
 
     public void terminate () {
 		hosebirdClient.stop();
