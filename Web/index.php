@@ -226,7 +226,7 @@ xmlhttp.send();
 		</div><!--/row-->
 		<hr>
 		<footer>
-			<p>&copy; Hash Scores 2014</p>
+			<p>&copy; HashScores 2015</p>
 		</footer>
     </div><!--/.container-->
 
