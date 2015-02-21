@@ -24,6 +24,14 @@ public class StartReading {
 		avoidKeywords.put("rt", 0);
 		avoidKeywords.put("#cwc", 0);
 		avoidKeywords.put("#CWC", 0);
+        avoidKeywords.put("Sri", 0);
+        avoidKeywords.put("Lanka", 0);
+        avoidKeywords.put("sri", 0);
+        avoidKeywords.put("lanka", 0);
+        avoidKeywords.put("south", 0);
+        avoidKeywords.put("africa", 0);
+        avoidKeywords.put("South", 0);
+        avoidKeywords.put("Africa", 0);
 	}
 	
 	public void startProcess() throws IOException {

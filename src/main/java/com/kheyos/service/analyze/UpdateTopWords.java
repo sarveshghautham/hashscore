@@ -25,8 +25,8 @@ public class UpdateTopWords extends TimerTask{
         this.team1 = t1;
         this.team2 = t2;
         this.matchId = match_id;    
-        this.wordCount = new HashMap<String, Integer>();
-        this.sortedSet = new TreeSet<Map.Entry<String, Integer>>(new SetComparator());
+        this.wordCount = new HashMap<>();
+        this.sortedSet = new TreeSet<>(new SetComparator());
         this.avoidKeywords = avoidKeywords;
      
     }
@@ -82,7 +82,6 @@ public class UpdateTopWords extends TimerTask{
     	PreparedStatement insertQuery = null;
     	PreparedStatement insertHistoryQuery = null;
     	PreparedStatement updateQuery = null;
-    	PreparedStatement updateHistoryQuery = null;
     	PreparedStatement selectLastId = null;
     	PreparedStatement selectExistingQuery = null;
     	
@@ -100,12 +99,8 @@ public class UpdateTopWords extends TimerTask{
 		
     	String updateWordQuery = "UPDATE "+db.getDbName()+".word_tracker "
     			+ "SET count=? "
-    			+ "WHERE word=?";
-
-		String updateWordHistoryQuery = "UPDATE "+db.getDbName()+".word_history "
-    			+ "SET updated_time=? "
     			+ "WHERE word_id=?";
- 
+
     	Date date = new Date();
 	   	Timestamp timestamp = new Timestamp(date.getTime());
 	   	
@@ -128,7 +123,7 @@ public class UpdateTopWords extends TimerTask{
                 int wordId = rs1.getInt("word_id");
 
                 //If the counts don't match update it
-        		if (dbCount != count) {
+        		if (dbCount < count) {
         			        			
         			try {
     			   		con.setAutoCommit(false);
@@ -136,14 +131,22 @@ public class UpdateTopWords extends TimerTask{
     			   		//Updating tracker table
     			   		updateQuery = con.prepareStatement(updateWordQuery);
     			   	    updateQuery.setInt(1, count);
-    			   	    updateQuery.setString(2, word);
+    			   	    updateQuery.setInt(2, wordId);
     			   	    updateQuery.executeUpdate();
+
+                        System.out.println("Inserting into history table");
+                        System.out.println("Word ID: " + wordId);
+                        System.out.println("Word: "+word);
+                        System.out.println("DB count: "+dbCount);
+                        System.out.println("Count: " + count);
+                        System.out.println("Timestamp: " + timestamp);
 
                         //Insert the new count in history table
                         insertHistoryQuery = con.prepareStatement(insertIntoWordHistoryQuery);
                         insertHistoryQuery.setInt(1, wordId);
                         insertHistoryQuery.setInt(2, count);
                         insertHistoryQuery.setTimestamp(3, timestamp);
+                        insertHistoryQuery.executeUpdate();
                         con.commit();
 
     			   	    
@@ -195,6 +198,12 @@ public class UpdateTopWords extends TimerTask{
 				   	if (rs.next()) {
                         lastId = rs.getInt("word_id");
 
+//                        System.out.println("Inserting first time into history table");
+//                        System.out.println("Word ID: "+lastId);
+//                        System.out.println("Word: "+word);
+//                        System.out.println("Count: "+count);
+//                        System.out.println("Timestamp: "+timestamp);
+
                         //History table
                         insertHistoryQuery = con.prepareStatement(insertIntoWordHistoryQuery);
                         insertHistoryQuery.setInt(1, lastId);
@@ -230,6 +239,10 @@ public class UpdateTopWords extends TimerTask{
 		   	    }
 			}
     	}
+
+        if (selectExistingQuery != null) {
+            selectExistingQuery.close();
+        }
     }
     
     @Override

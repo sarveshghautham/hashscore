@@ -11,9 +11,9 @@ import java.util.HashMap;
 
 public class POSTagger {
 
-    private static final String f_model = "models/english-left3words-distsim.tagger";
+    private static final String f_model = "models/gate-EN-twitter.model";
     private static MaxentTagger tagger;
-    private static final HashMap<String, Integer> tags = new HashMap<String, Integer>();
+    private static final HashMap<String, Integer> tags = new HashMap<>();
     private POSTagger() {
     }
 
@@ -56,9 +56,10 @@ public class POSTagger {
     }
 
     public ArrayList<String> getWords(String tweet) {
+
         String tag = tagger.tagString(tweet);
-        ArrayList<String> words = new ArrayList<String>();
-        //System.out.println(tag);
+        ArrayList<String> words = new ArrayList<>();
+
         String[] tweetSplit = tag.split(" ");
         for (int i=0; i<tweetSplit.length;i++) {
             String[] wordSplit = tweetSplit[i].split("_");
@@ -78,8 +79,8 @@ public class POSTagger {
 //
 //    public static void main(String []args) {
 //        POSTagger inst = POSTagger.getTaggerInstance();
-//        POSTagger.loadTagger();
-//        POSTagger.getWords("HI");
+//
+//        System.out.println(inst.getWords("Sri Lanka is a great nation"));
 //    }
 
 }

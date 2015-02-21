@@ -1,6 +1,6 @@
-Pakistan
-West Indies
-13
+Sri Lanka
+Afghanistan
+15
 #cwc15
-#pakvswi
-#pakvwi
+#SLvsAFG
+#SLvAFG
