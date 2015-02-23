@@ -1,6 +1,8 @@
-Sri Lanka
-Afghanistan
-15
+England
+Scotland
+17
+186850
+10
 #cwc15
-#SLvsAFG
-#SLvAFG
+#EngvsSco
+#EngvSco

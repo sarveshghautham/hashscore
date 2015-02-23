@@ -11,7 +11,7 @@ import java.util.HashMap;
 
 public class POSTagger {
 
-    private static final String f_model = "models/gate-EN-twitter.model";
+    private static final String f_model = "models/english-left3words-distsim.tagger";
     private static MaxentTagger tagger;
     private static final HashMap<String, Integer> tags = new HashMap<>();
     private POSTagger() {

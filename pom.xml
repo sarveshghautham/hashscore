@@ -17,7 +17,7 @@
 			  <archive>
 			    <manifest>
 				<addClasspath>true</addClasspath>
-				<mainClass>com.kheyos.service.analyze.StartReading</mainClass>
+				<mainClass>com.kheyos.service.analyze.HashScore</mainClass>
 				<classpathPrefix>dependency-jars/</classpathPrefix>
 			    </manifest>
 			  </archive>

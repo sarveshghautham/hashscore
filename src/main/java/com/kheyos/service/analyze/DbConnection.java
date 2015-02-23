@@ -7,7 +7,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.sql.Connection;
 import java.sql.DriverManager;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 /**
@@ -41,7 +40,7 @@ public class DbConnection {
 
     private static void loadProperties() throws IOException {
     	
-    	InputStream stream = StartReading.class.getResourceAsStream(propertiesFile);
+    	InputStream stream = HashScore.class.getResourceAsStream(propertiesFile);
     	BufferedReader br = null;
     	
         try {

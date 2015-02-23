@@ -1,180 +1,100 @@
 package com.kheyos.service.analyze;
 
-import java.io.*;
-import java.util.*;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.Lists;
-import com.twitter.hbc.ClientBuilder;
-import com.twitter.hbc.core.Client;
-import com.twitter.hbc.core.Constants;
-import com.twitter.hbc.core.Hosts;
-import com.twitter.hbc.core.HttpHosts;
-import com.twitter.hbc.core.endpoint.StatusesFilterEndpoint;
-import com.twitter.hbc.core.event.Event;
-import com.twitter.hbc.core.processor.StringDelimitedProcessor;
-import com.twitter.hbc.httpclient.auth.Authentication;
-import com.twitter.hbc.httpclient.auth.OAuth1;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Timer;
 
 public class HashScore {
-	
-	private String consumerKey = "";
-	private String consumerSecret = "";
-	private String token = "";
-	private String secret = "";
-	private BlockingQueue<String> msgQueue ;
-	private BlockingQueue<Event> eventQueue;
-	private Hosts hosebirdHosts ;
-	private Authentication hosebirdAuth ;
-	public StatusesFilterEndpoint hosebirdEndpoint ;
-	private Client hosebirdClient;
-	private String keyFile;
-	
+
+	private final String keyFile = "/secret.txt";
+    private final String keywordFile = "/keywords.txt";
+    private final String avoidKeywordsFile = "/avoidKeywords.txt";
+
+    public static ReadTweets readTweet = null;
     private UpdateTopWords updateWords;
-    private POSTagger taggerObj;
-    private ArrayList<String> trackingKeywords;
+    private Timer updateSetTimer = null;
 
-	public HashScore() {
+    private HashMap<String, Integer> avoidKeywords;
 
+    public HashScore() {
+		updateSetTimer = new Timer();
+        avoidKeywords = new HashMap<>();
 	}
 
-	public HashScore(String keyFile, ArrayList<String> keywords, UpdateTopWords wordsInstance) {
-        this.keyFile = keyFile;
-		this.trackingKeywords = keywords;
-        this.updateWords = wordsInstance;
-        this.taggerObj = POSTagger.getTaggerInstance();
-	}
-	
-	public void readKeyFromFile() throws IOException {
-		
-		InputStream stream = StartReading.class.getResourceAsStream(keyFile);
-		
-		BufferedReader reader = null;
-		
-		try {
-		
-			reader = new BufferedReader(new InputStreamReader(stream));
-			
-			consumerKey = reader.readLine();
-			consumerSecret = reader.readLine();
-			token = reader.readLine();
-			secret = reader.readLine();
-			
-		} 
-		finally {
-			if (reader != null)
-				reader.close();
-		}
-		
-	}
-	
-	public void setup() {
-		/** Set up your blocking queues: Be sure to size these properly based on expected TPS of your stream */
-		msgQueue = new LinkedBlockingQueue<String>(100000);
-		eventQueue = new LinkedBlockingQueue<Event>(1000);
-	
-		/** Declare the host you want to connect to, the endpoint, and authentication (basic auth or oauth) */
-		hosebirdHosts = new HttpHosts(Constants.STREAM_HOST);
-		hosebirdEndpoint = new StatusesFilterEndpoint();
-		// Optional: set up some followings and track terms
-		List<Long> followings = Lists.newArrayList(1234L, 566788L);
-		List<String> terms = Lists.newArrayList(trackingKeywords);
-		hosebirdEndpoint.followings(followings);
-		hosebirdEndpoint.trackTerms(terms);
-		
-	}
-	
-	public void authenticate() {
-		// These secrets should be read from a config file
-		hosebirdAuth = new OAuth1(consumerKey, consumerSecret, token, secret);
-	}
-	
-	public void connect() {
-		ClientBuilder builder = new ClientBuilder()
-		  .name("HashScore")                              // optional: mainly for the logs
-		  .hosts(hosebirdHosts)
-		  .authentication(hosebirdAuth)
-		  .endpoint(hosebirdEndpoint)
-		  .processor(new StringDelimitedProcessor(msgQueue))
-		  .eventMessageQueue(eventQueue);                          // optional: use this if you want to process client events
+    public void readAvoidKeywords() throws IOException {
+        BufferedReader br = null;
+        InputStream stream = HashScore.class.getResourceAsStream(avoidKeywordsFile);
 
-		hosebirdClient = builder.build();
-		// Attempts to establish a connection.
-		hosebirdClient.connect();
-	}
+        try {
 
-	public void JSONData(String msg) throws IOException {
-        //read json file data to String
-        byte[] jsonData = msg.getBytes();
+            br = new BufferedReader(new InputStreamReader(stream));
+            String keywords="";
 
-        //create ObjectMapper instance
-        ObjectMapper objectMapper = new ObjectMapper();
-
-        //read JSON like DOM Parser
-        JsonNode rootNode = objectMapper.readTree(jsonData);
-        JsonNode tweetNode = rootNode.path("text");
-
-        String tweet = cleanTweets(tweetNode.asText());
-
-        ArrayList<String> words = null;
-        if (tweet != null) {
-            words = taggerObj.getWords(tweet);
-            if (words != null) {
-                updateWords.updateWordsInMap(words);
+            while ((keywords = br.readLine()) != null) {
+                avoidKeywords.put(keywords, 0);
             }
         }
-	}
-
-    public String cleanTweets(String tweet) {
-
-        String cleanTweet = "";
-        try {
-            byte[] utf8Bytes = tweet.getBytes("UTF-8");
-
-            cleanTweet = new String(utf8Bytes, "UTF-8");
-
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
+        finally {
+            if (br != null)
+                br.close();
         }
-
-        Pattern unicodeOutliers = Pattern.compile("[^\\x00-\\x7F]",
-                Pattern.UNICODE_CASE | Pattern.CANON_EQ
-                        | Pattern.CASE_INSENSITIVE);
-        Matcher unicodeOutlierMatcher = unicodeOutliers.matcher(cleanTweet);
-        cleanTweet = unicodeOutlierMatcher.replaceAll("");
-
-        return cleanTweet;
-
     }
 
-    public void terminate () {
-		hosebirdClient.stop();
-	}
-
-	public void readTweets() {
+	public void startProcess() throws IOException {
+		
+		BufferedReader br = null;
+		InputStream stream = HashScore.class.getResourceAsStream(keywordFile);
 		
 		try {
-			readKeyFromFile();
-			setup();
-			authenticate();
-			connect();
 			
-			while (!hosebirdClient.isDone()) {
-				String msg = msgQueue.take();
-				JSONData(msg);
+			br = new BufferedReader(new InputStreamReader(stream));
+	        String keywords="";
+
+	        String team1 = br.readLine();
+	        String team2 = br.readLine();
+	        int matchId = Integer.parseInt(br.readLine());
+            String yMatchId = br.readLine();
+            int k = Integer.parseInt(br.readLine());
+	        
+	        avoidKeywords.put(team1, 0);
+	        avoidKeywords.put(team1.toLowerCase(), 0);
+	        avoidKeywords.put(team2, 0);
+	        avoidKeywords.put(team2.toLowerCase(), 0);
+	        
+	        //Counting the words in a timer
+	        updateWords = new UpdateTopWords(team1, team2, matchId, avoidKeywords, yMatchId, k);
+	        updateSetTimer.schedule(updateWords, 0, 30000);
+	    
+	        //Add all keywords to this arraylist
+	        ArrayList<String> trackingKeywords = new ArrayList<String>();
+	        
+			while ((keywords = br.readLine()) != null) {
+				avoidKeywords.put(keywords, 0);
+				keywords = keywords.toLowerCase();
+				trackingKeywords.add(keywords);
 			}
 			
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (InterruptedException e1) {
-			e1.printStackTrace();
+			readTweet = new ReadTweets(keyFile, trackingKeywords, updateWords);
+			readTweet.readTweets();
+		
+		}	
+		finally {
+			if (br != null)
+				br.close();	
 		}
 		
 	}
+
+	public static void main (String []args) throws IOException {
+		
+		HashScore startProcess = new HashScore();
+        startProcess.readAvoidKeywords();
+		startProcess.startProcess();
+	}
+	
+	
 }
