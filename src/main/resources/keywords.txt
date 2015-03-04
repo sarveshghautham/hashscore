@@ -1,8 +1,8 @@
-England
-Scotland
-17
-186850
+Pakistan
+United Arab Emirates
+28
+186861
 10
 #cwc15
-#EngvsSco
-#EngvSco
+#PAKvsUAE
+#PAKvUAE

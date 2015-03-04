@@ -8,6 +8,7 @@ package com.kheyos.service.analyze;
  * @see <a href="ftp://ftp.cis.upenn.edu/pub/treebank/doc/tagguide.ps.gz">Penn Treebank Specification</a>
  */
 public enum PartOfSpeech {
+
     ADJECTIVE( "JJ" ),
     ADJECTIVE_COMPARATIVE( ADJECTIVE + "R" ),
     ADJECTIVE_SUPERLATIVE( ADJECTIVE + "S" ),

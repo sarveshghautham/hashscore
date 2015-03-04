@@ -269,7 +269,7 @@ public class UpdateTopWords extends TimerTask{
                 response.append(inputLine);
             }
 
-            overs = JSONData(response.toString());
+            overs = parseJsonObj(response.toString());
 
         } catch (MalformedURLException e) {
             e.printStackTrace();
@@ -286,16 +286,36 @@ public class UpdateTopWords extends TimerTask{
         return overs;
     }
 
-    public double JSONData(String msg) throws IOException {
+    public double parseJsonObj(String msg) throws IOException {
         byte[] jsonData = msg.getBytes();
 
         //create ObjectMapper instance
         ObjectMapper objectMapper = new ObjectMapper();
+        Double overs = 0.0;
 
         //read JSON like DOM Parser
         JsonNode rootNode = objectMapper.readTree(jsonData);
-        JsonNode oversNode = rootNode.path("query").path("results").path("Scorecard").path("past_ings").path(0).path("s").path("a").path("o");
-        Double overs = Double.parseDouble(oversNode.asText());
+
+        // If the array has the 0th element
+        JsonNode oversNode = rootNode.path("query").path("results").path("Scorecard").path("past_ings").path("s").path("a").path("o");
+        if (!oversNode.isMissingNode()) {
+            overs = Double.parseDouble(oversNode.asText());
+        }
+        else {
+            oversNode = rootNode.path("query").path("results").path("Scorecard").path("past_ings").path(0).path("s").path("a").path("o");
+            overs = Double.parseDouble(oversNode.asText());
+            JsonNode matchStatus = rootNode.path("query").path("results").path("Scorecard").path("past_ings").path(0).path("s").path("d");
+            String isInningsBreak = matchStatus.asText();
+
+            if (isInningsBreak.equals("Innings Break")) {
+                oversNode = rootNode.path("query").path("results").path("Scorecard").path("past_ings").path(1).path("s").path("a").path("o");
+                overs = Double.parseDouble(oversNode.asText());
+            }
+            else if (isInningsBreak.equals("Match Ended")) {
+                //TODO: Schedule a timer to exit after 1 hour
+                System.exit(0);
+            }
+        }
 
         return overs;
     }
@@ -319,6 +339,7 @@ public class UpdateTopWords extends TimerTask{
 //        System.out.println("Prev Ball: "+prevBall);
 //        System.out.println("Current Ball: "+currentBall);
 
+        //TODO: Test
         if (prevBall < currentBall) {
             prevBall = currentBall;
             return true;
@@ -344,6 +365,7 @@ public class UpdateTopWords extends TimerTask{
             if (checkChangeInBall()) {
                 insertWordIntoDb(getTopKWords(k));
             }
+
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}

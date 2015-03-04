@@ -27,7 +27,6 @@ public class POSTagger {
             try {
 				loadTagger();
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
         }
@@ -76,11 +75,5 @@ public class POSTagger {
 
         return words;
     }
-//
-//    public static void main(String []args) {
-//        POSTagger inst = POSTagger.getTaggerInstance();
-//
-//        System.out.println(inst.getWords("Sri Lanka is a great nation"));
-//    }
 
 }
