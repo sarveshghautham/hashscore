@@ -1,8 +1,8 @@
-Pakistan
-United Arab Emirates
-28
-186861
+India
+West Indies
+31
+186864
 10
 #cwc15
-#PAKvsUAE
-#PAKvUAE
+#IndvsWi
+#IndvWi

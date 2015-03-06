@@ -271,6 +271,10 @@ public class UpdateTopWords extends TimerTask{
 
             overs = parseJsonObj(response.toString());
 
+            if (overs == 0.0) {
+                return 0.0;
+            }
+
         } catch (MalformedURLException e) {
             e.printStackTrace();
         } catch (ProtocolException e) {
@@ -303,6 +307,10 @@ public class UpdateTopWords extends TimerTask{
         }
         else {
             oversNode = rootNode.path("query").path("results").path("Scorecard").path("past_ings").path(0).path("s").path("a").path("o");
+            if (oversNode.isMissingNode()) {
+                endOfInnings = false;
+                return overs;
+            }
             overs = Double.parseDouble(oversNode.asText());
             JsonNode matchStatus = rootNode.path("query").path("results").path("Scorecard").path("past_ings").path(0).path("s").path("d");
             String isInningsBreak = matchStatus.asText();
@@ -344,10 +352,9 @@ public class UpdateTopWords extends TimerTask{
             prevBall = currentBall;
             return true;
         }
-        else if (!endOfInnings && currentBall == 0.0) {
-            endOfInnings = true;
+        else if (currentBall == 0.0) {
             prevBall = 0.0;
-            return false;
+            return true;
         }
 
         return false;

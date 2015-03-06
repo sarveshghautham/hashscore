@@ -9,3 +9,7 @@ south
 africa
 South
 Africa
+West
+west
+Indies
+indies
