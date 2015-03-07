@@ -1,8 +1,8 @@
-India
-West Indies
-31
-186864
+South Africa
+Pakistan
+32
+186865
 10
 #cwc15
-#IndvsWi
-#IndvWi
+#SAvsPAK
+#SAvPAK

@@ -67,7 +67,7 @@ public class HashScore {
 	        
 	        //Counting the words in a timer
 	        updateWords = new UpdateTopWords(team1, team2, matchId, avoidKeywords, yMatchId, k);
-	        updateSetTimer.schedule(updateWords, 0, 30000);
+	        updateSetTimer.schedule(updateWords, 0, 10000);
 	    
 	        //Add all keywords to this arraylist
 	        ArrayList<String> trackingKeywords = new ArrayList<String>();

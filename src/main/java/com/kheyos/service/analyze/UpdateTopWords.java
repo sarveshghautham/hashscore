@@ -93,7 +93,10 @@ public class UpdateTopWords extends TimerTask{
     }
     
     public void insertWordIntoDb(ArrayList<WordCount> topKWords) throws SQLException {
-    	
+
+        //TODO: Test
+        double overs = prevBall;
+
     	db = DbConnection.getInstance();
     	Connection con = db.getConnection();
     	
@@ -109,8 +112,8 @@ public class UpdateTopWords extends TimerTask{
     	String insertIntoWordTrackerQuery = "INSERT INTO word_tracker (match_id, word, count) "
     			+ "VALUES (?,?,?)";
     	
-		String insertIntoWordHistoryQuery = "INSERT INTO word_history (word_id, count, updated_time) "
-				+ "VALUES (?,?,?)";
+		String insertIntoWordHistoryQuery = "INSERT INTO word_history (word_id, count, overs, updated_time) "
+				+ "VALUES (?,?,?,?)";
 		
 		String selectLastIdQuery = "SELECT word_id FROM word_tracker "
 				+ "WHERE word=? AND match_id=?";
@@ -155,7 +158,8 @@ public class UpdateTopWords extends TimerTask{
                         insertHistoryQuery = con.prepareStatement(insertIntoWordHistoryQuery);
                         insertHistoryQuery.setInt(1, wordId);
                         insertHistoryQuery.setInt(2, count);
-                        insertHistoryQuery.setTimestamp(3, timestamp);
+                        insertHistoryQuery.setDouble(3, overs);
+                        insertHistoryQuery.setTimestamp(4, timestamp);
                         insertHistoryQuery.executeUpdate();
                         con.commit();
 
@@ -212,7 +216,8 @@ public class UpdateTopWords extends TimerTask{
                         insertHistoryQuery = con.prepareStatement(insertIntoWordHistoryQuery);
                         insertHistoryQuery.setInt(1, lastId);
                         insertHistoryQuery.setInt(2, count);
-                        insertHistoryQuery.setTimestamp(3, timestamp);
+                        insertHistoryQuery.setDouble(3, overs);
+                        insertHistoryQuery.setTimestamp(4, timestamp);
                         insertHistoryQuery.executeUpdate();
                         con.commit();
                     }
@@ -271,10 +276,6 @@ public class UpdateTopWords extends TimerTask{
 
             overs = parseJsonObj(response.toString());
 
-            if (overs == 0.0) {
-                return 0.0;
-            }
-
         } catch (MalformedURLException e) {
             e.printStackTrace();
         } catch (ProtocolException e) {
@@ -321,6 +322,7 @@ public class UpdateTopWords extends TimerTask{
             }
             else if (isInningsBreak.equals("Match Ended")) {
                 //TODO: Schedule a timer to exit after 1 hour
+                endOfInnings = true;
                 System.exit(0);
             }
         }
@@ -344,10 +346,6 @@ public class UpdateTopWords extends TimerTask{
         // Case 2: if prevBall and currentBall don't match, compare them. If prevBall is
         // less than currentBall, then update the prevBall.
 
-//        System.out.println("Prev Ball: "+prevBall);
-//        System.out.println("Current Ball: "+currentBall);
-
-        //TODO: Test
         if (prevBall < currentBall) {
             prevBall = currentBall;
             return true;
